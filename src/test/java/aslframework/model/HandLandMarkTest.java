@@ -56,7 +56,7 @@ public class HandLandMarkTest {
     HandLandmark landmark = new HandLandmark(0.1234, 0.5678, 0.9999);
     String result = landmark.toString();
 
-    assertEquals("HandLandmark(x=0.1234, y=0.5678, z=0.9999", result);
+    assertEquals("HandLandmark(x=0.1234, y=0.5678, z=0.9999)", result);
   }
 
   @Test
@@ -64,7 +64,7 @@ public class HandLandMarkTest {
     HandLandmark landmark = new HandLandmark(0, 0, 0);
     String result = landmark.toString();
 
-    assertEquals("HandLandmark(x=0, y=0, z=0", result);
+    assertEquals("HandLandmark(x=0.0000, y=0.0000, z=0.0000)", result);
   }
 
   }

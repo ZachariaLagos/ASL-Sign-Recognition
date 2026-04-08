@@ -21,11 +21,13 @@
 
   <dependencies>
     <!-- MediaPipe for hand detection -->
-    <dependency>
-      <groupId>com.google.mediapipe</groupId>
-      <artifactId>mediapipe-tasks-java</artifactId>
-      <version>0.10.0</version>
-    </dependency>
+    <!-- NOTE: mediapipe-tasks-java is not available on Maven Central or Google Maven. -->
+    <!-- Install manually when ready: mvn install:install-file -Dfile=mediapipe.jar -->
+    <!-- <dependency> -->
+    <!--   <groupId>com.google.mediapipe</groupId> -->
+    <!--   <artifactId>mediapipe-tasks-java</artifactId> -->
+    <!--   <version>0.10.0</version> -->
+    <!-- </dependency> -->
 
     <!-- SQLite JDBC -->
     <dependency>
@@ -38,7 +40,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.9.3</version>
+      <version>5.10.2</version>
       <scope>test</scope>
     </dependency>
 
