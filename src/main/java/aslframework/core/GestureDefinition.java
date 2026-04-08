@@ -1,4 +1,4 @@
-package java.aslframework.core;
+package aslframework.core;
 
 /**
  * Immutable definition of a single ASL gesture.

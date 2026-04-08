@@ -1,6 +1,6 @@
-package java.aslframework.core;
+package aslframework.core;
 
-import java.aslframework.persistence.AttemptRecord;
+import aslframework.persistence.AttemptRecord;
 import java.util.Collections;
 import java.util.List;
 
@@ -8,29 +8,29 @@ import java.util.List;
  * In-session view of a user's learning progress.
  *
  * <p>This class lives in the {@code core} layer and is the object that
- * {@link java.aslframework.game.LearningSession} interacts with during gameplay.
- * It wraps a {@link java.aslframework.persistence.UserProgress} loaded from the
+ * {@link aslframework.game.LearningSession} interacts with during gameplay.
+ * It wraps a {@link aslframework.persistence.UserProgress} loaded from the
  * database, adding session-level convenience without exposing raw persistence
  * objects to game logic.
  *
  * <p>Separation of concerns:
  * <ul>
  *   <li>{@code core.UserProgress} (this class) – used by game/session logic</li>
- *   <li>{@link java.aslframework.persistence.UserProgress} – used by
- *       {@link java.aslframework.persistence.UserProgressDAO} for DB I/O</li>
+ *   <li>{@link aslframework.persistence.UserProgress} – used by
+ *       {@link aslframework.persistence.UserProgressDAO} for DB I/O</li>
  * </ul>
  */
 public class UserProgress {
 
   /** The underlying persistence object that backs this session view. */
-  private final java.aslframework.persistence.UserProgress persistenceProgress;
+  private final aslframework.persistence.UserProgress persistenceProgress;
 
   /**
    * Constructs a {@code core.UserProgress} that wraps the given persistence object.
    *
    * @param persistenceProgress the DB-loaded progress record; must not be {@code null}
    */
-  public UserProgress(java.aslframework.persistence.UserProgress persistenceProgress) {
+  public UserProgress(aslframework.persistence.UserProgress persistenceProgress) {
     this.persistenceProgress = persistenceProgress;
   }
 
@@ -40,7 +40,7 @@ public class UserProgress {
    * @param userId unique identifier for the user
    */
   public UserProgress(String userId) {
-    this.persistenceProgress = new java.aslframework.persistence.UserProgress(userId);
+    this.persistenceProgress = new aslframework.persistence.UserProgress(userId);
   }
 
   /**
@@ -86,17 +86,17 @@ public class UserProgress {
 
   /**
    * Increments the completed-level counter by one.
-   * Called by {@link java.aslframework.game.LearningSession} when an attempt passes.
+   * Called by {@link aslframework.game.LearningSession} when an attempt passes.
    */
   public void incrementLevel() { persistenceProgress.incrementLevel(); }
 
   /**
    * Exposes the underlying persistence object so it can be flushed to the
-   * database via {@link java.aslframework.persistence.UserProgressDAO#save}.
+   * database via {@link aslframework.persistence.UserProgressDAO#save}.
    *
-   * @return the wrapped {@link java.aslframework.persistence.UserProgress}
+   * @return the wrapped {@link aslframework.persistence.UserProgress}
    */
-  public java.aslframework.persistence.UserProgress toPersistence() {
+  public aslframework.persistence.UserProgress toPersistence() {
     return persistenceProgress;
   }
 }

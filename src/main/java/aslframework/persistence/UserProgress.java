@@ -1,4 +1,4 @@
-package java.aslframework.persistence;
+package aslframework.persistence;
 
 import java.util.ArrayList;
 import java.util.Collections;
