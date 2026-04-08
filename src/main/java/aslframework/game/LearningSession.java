@@ -1,8 +1,8 @@
-package java.aslframework.game;
+package aslframework.game;
 
-import java.aslframework.persistence.AttemptRecord;
-import java.aslframework.persistence.UserProgress;
-import java.aslframework.recognition.GestureRecognizer;
+import aslframework.persistence.AttemptRecord;
+import aslframework.persistence.UserProgress;
+import aslframework.recognition.GestureRecognizer;
 
 /**
  * Orchestrates a single ASL learning session for one user.
@@ -64,12 +64,12 @@ public class LearningSession {
    * @return the {@link AttemptRecord} created for this attempt
    */
   public AttemptRecord attempt(byte[] frame, GestureChallenge challenge) {
-    double accuracy = recognizer.getAccuracy(frame, challenge.getTarget());
+    double accuracy = recognizer.recognize(null, challenge.getTarget()).getConfidenceScore();
     boolean passed = scoringEngine.isPassed(accuracy);
     int score = scoringEngine.calculateScore(accuracy, challenge.getDifficultyLevel());
 
     AttemptRecord record = new AttemptRecord(
-        challenge.getTarget().getGestureId(),
+        challenge.getTarget().getGestureName(),
         accuracy,
         System.currentTimeMillis(),
         passed
