@@ -1,37 +1,28 @@
-package java.aslframework.recognition;
+package aslframework.recognition;
 
-import java.aslframework.core.GestureDefinition;
+import aslframework.model.GestureDefinition;
+import aslframework.model.HandLandmark;
+import aslframework.model.RecognitionResult;
+
+import java.util.List;
 
 /**
- * Contract for all gesture-recognition backends.
+ * Defines the contract for gesture recognition in the ASL learning platform.
+ * Implementations compare a user's detected hand landmarks against a target
+ * gesture definition and return a scored recognition result.
  *
- * <p>Two implementations are currently provided:
- * <ul>
- *   <li>{@link TemplateMatchRecognizer} – lightweight template-matching approach</li>
- *   <li>{@link MediaPipeRecognizer} – high-accuracy MediaPipe-based approach</li>
- * </ul>
- *
- * <p>Implementations are injected into {@link java.aslframework.game.LearningSession}
- * via constructor, making it straightforward to swap recognition backends at runtime.
+ * <p>Known implementations include {@link MediaPipeRecognizer} for live camera
+ * input and {@code MockGestureRecognizer} for testing purposes.</p>
  */
 public interface GestureRecognizer {
 
   /**
-   * Identifies the most likely gesture present in the given camera frame.
+   * Compares the user's hand landmarks against a target gesture definition
+   * and returns a recognition result with a confidence score.
    *
-   * @param frame raw image bytes captured from the camera
-   * @return the gesture ID of the best match (e.g. {@code "thumbs_up"})
+   * @param userLandmarks  the list of 21 hand landmarks detected from the user's hand
+   * @param targetGesture  the reference gesture definition to compare against
+   * @return a RecognitionResult containing the confidence score and match status
    */
-  String recognize(byte[] frame);
-
-  /**
-   * Computes how closely the pose in {@code frame} matches the
-   * {@code target} gesture's reference pose.
-   *
-   * @param frame  raw image bytes captured from the camera
-   * @param target the {@link GestureDefinition} to compare against
-   * @return similarity score in {@code [0.0, 1.0]}, where {@code 1.0} is a
-   *         perfect match
-   */
-  double getAccuracy(byte[] frame, GestureDefinition target);
+  RecognitionResult recognize(List<HandLandmark> userLandmarks, GestureDefinition targetGesture);
 }
