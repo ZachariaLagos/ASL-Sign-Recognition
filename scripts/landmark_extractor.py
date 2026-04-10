@@ -63,7 +63,13 @@ def extract_landmarks():
     print("ERROR: Could not open camera", file=sys.stderr)
     sys.exit(2)
 
-  print("Camera ready - show your hand. Press 'q' to quit.", file=sys.stderr)
+  # Check if running headless (called from Java subprocess)
+  headless = "--headless" in sys.argv
+
+  if not headless:
+    print("Camera ready - show your hand. Press 'q' to quit.", file=sys.stderr)
+  else:
+    print("Running in headless mode - streaming landmarks to stdout.", file=sys.stderr)
 
   try:
     while True:
@@ -90,29 +96,30 @@ def extract_landmarks():
         print(json.dumps(landmarks))
         sys.stdout.flush()
 
+      if not headless:
         # Draw landmarks on preview window
-        for lm in result.hand_landmarks[0]:
-          h, w, _ = frame.shape
-          cx, cy = int(lm.x * w), int(lm.y * h)
-          cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
-        cv2.putText(frame, "Hand detected!", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-      else:
-        cv2.putText(frame, "Show your hand...", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        if result.hand_landmarks:
+          for lm in result.hand_landmarks[0]:
+            h, w, _ = frame.shape
+            cx, cy = int(lm.x * w), int(lm.y * h)
+            cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
+          cv2.putText(frame, "Hand detected!", (10, 30),
+                      cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        else:
+          cv2.putText(frame, "Show your hand...", (10, 30),
+                      cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-      # Show live preview
-      cv2.imshow("ASL Landmark Extractor", frame)
+        cv2.imshow("ASL Landmark Extractor", frame)
 
-      # Quit on 'q'
-      if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+          break
 
   except KeyboardInterrupt:
     pass
   finally:
     cap.release()
-    cv2.destroyAllWindows()
+    if not headless:
+      cv2.destroyAllWindows()
     landmarker.close()
 
 if __name__ == "__main__":
