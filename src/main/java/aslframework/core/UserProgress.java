@@ -4,7 +4,6 @@ import aslframework.persistence.AttemptRecord;
 import java.util.Collections;
 import java.util.List;
 
-// New comment
 /**
  * In-session view of a user's learning progress.
  *
