@@ -3,8 +3,9 @@ package aslframework.game;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import aslframework.persistence.UserProgress;
 import aslframework.model.GestureDefinition;
+import aslframework.persistence.UserProgress;
+import aslframework.model.StaticGestureDefinition;
 import aslframework.model.HandLandmark;
 import aslframework.persistence.AttemptRecord;
 import aslframework.recognition.MockGestureRecognizer;
@@ -34,7 +35,7 @@ public class LearningSessionTest {
     for (int i = 0; i < 21; i++) {
       landmarks.add(new HandLandmark(i * 0.01, i * 0.02, i * 0.03));
     }
-    GestureDefinition gestureA = new GestureDefinition("A", landmarks);
+    StaticGestureDefinition gestureA = new StaticGestureDefinition("A", landmarks);
     variantsA = new ArrayList<>();
     variantsA.add(gestureA);
     easyChallenge = new GestureChallenge(variantsA, 1);

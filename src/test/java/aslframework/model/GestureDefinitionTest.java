@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the GestureDefinition class
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.Assertions.*;
 
 public class GestureDefinitionTest {
   private List<HandLandmark> landmarks;
-  private GestureDefinition gestureA;
+  private StaticGestureDefinition gestureA;
 
   @BeforeEach
   void setUp(){
@@ -24,7 +23,7 @@ public class GestureDefinitionTest {
     for (int i = 0; i < 21; i++){
       landmarks.add(new HandLandmark(i * 0.01, i * 0.02, i * 0.03));
     }
-    gestureA = new GestureDefinition("A", landmarks);
+    gestureA = new StaticGestureDefinition("A", landmarks);
   }
 
   // Testing Constructors and Getters

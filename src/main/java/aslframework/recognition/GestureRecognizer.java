@@ -1,6 +1,7 @@
 package aslframework.recognition;
 
 import aslframework.model.GestureDefinition;
+import aslframework.model.StaticGestureDefinition;
 import aslframework.model.HandLandmark;
 import aslframework.model.RecognitionResult;
 

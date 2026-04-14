@@ -3,6 +3,7 @@ package aslframework.game;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import aslframework.model.GestureDefinition;
+import aslframework.model.StaticGestureDefinition;
 import aslframework.model.HandLandmark;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,7 @@ public class GestureChallengeTest {
     for (int i = 0; i < 21; i++) {
       landmarks.add(new HandLandmark(i * 0.01, i * 0.02, i * 0.03));
     }
-    gestureB = new GestureDefinition("B", landmarks);
+    gestureB = new StaticGestureDefinition("B", landmarks);
     variantsB = new ArrayList<>();
     variantsB.add(gestureB);
     challenge = new GestureChallenge(variantsB, 2);

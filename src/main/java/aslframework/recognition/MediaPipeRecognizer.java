@@ -2,6 +2,7 @@
 package aslframework.recognition;
 
 import aslframework.model.GestureDefinition;
+import aslframework.model.StaticGestureDefinition;
 import aslframework.model.HandLandmark;
 import aslframework.model.RecognitionResult;
 
@@ -34,29 +35,34 @@ public class MediaPipeRecognizer implements GestureRecognizer {
    * @throws IllegalArgumentException if the landmark list does not contain exactly 21 landmarks
    */
   @Override
-  public RecognitionResult recognize(List<HandLandmark> userLandmarks, List<GestureDefinition> targetGesture){
+  public RecognitionResult recognize(List<HandLandmark> userLandmarks, List<GestureDefinition> targetGesture) {
     double bestConfidenceScore = 0.0;
     GestureDefinition bestTargetGesture = targetGesture.get(0);
-    for(GestureDefinition target : targetGesture) {
-      List<HandLandmark> referenceLandmarks = target.getReferenceLandmarks();
 
-      if (userLandmarks.size() != LANDMARK_COUNT || referenceLandmarks.size() != LANDMARK_COUNT) {
-        throw new IllegalArgumentException(
-            "Both landmark lists must contain exactly " + LANDMARK_COUNT + " points." +
-                "Got user= " + userLandmarks.size() + ", reference= " + referenceLandmarks.size()
-        );
-      }
-      double totalDistance = 0.0;
+    for (GestureDefinition target : targetGesture) {
+      if (target instanceof StaticGestureDefinition) {
+        StaticGestureDefinition staticTarget = (StaticGestureDefinition) target;
+        List<HandLandmark> referenceLandmarks = staticTarget.getReferenceLandmarks();
 
-      for (int i = 0; i < LANDMARK_COUNT; i++) {
-        totalDistance += euclideanDistance(userLandmarks.get(i), referenceLandmarks.get(i));
+        if (userLandmarks.size() != LANDMARK_COUNT || referenceLandmarks.size() != LANDMARK_COUNT) {
+          throw new IllegalArgumentException(
+              "Both landmark lists must contain exactly " + LANDMARK_COUNT + " points." +
+                  "Got user= " + userLandmarks.size() + ", reference= " + referenceLandmarks.size()
+          );
+        }
+
+        double totalDistance = 0.0;
+        for (int i = 0; i < LANDMARK_COUNT; i++) {
+          totalDistance += euclideanDistance(userLandmarks.get(i), referenceLandmarks.get(i));
+        }
+        double avgDistance = totalDistance / LANDMARK_COUNT;
+        double confidenceScore = 1.0 / (1.0 + avgDistance);
+        if (confidenceScore > bestConfidenceScore) {
+          bestConfidenceScore = confidenceScore;
+          bestTargetGesture = target;
+        }
       }
-      double avgDistance = totalDistance / LANDMARK_COUNT;
-      double confidenceScore = 1.0 / (1.0 + avgDistance);
-      if (confidenceScore > bestConfidenceScore){
-        bestConfidenceScore = confidenceScore;
-        bestTargetGesture = target;
-      }
+      // future: else if (target instanceof DynamicGestureDefinition) { ... }
     }
 
     return new RecognitionResult(bestConfidenceScore, bestTargetGesture);

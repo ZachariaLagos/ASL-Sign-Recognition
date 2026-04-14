@@ -3,6 +3,7 @@ package aslframework.recognition;
 import aslframework.model.GestureDefinition;
 import aslframework.model.HandLandmark;
 import aslframework.model.RecognitionResult;
+import aslframework.model.StaticGestureDefinition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +32,7 @@ class MediaPipeRecognizerTest {
     }
     // Single variant - original landmarks, no rotation
     variants = new ArrayList<>();
-    variants.add(new GestureDefinition("A", referenceLandmarks));
+    variants.add(new StaticGestureDefinition("A", referenceLandmarks));
   }
 
   // --- Happy path ---
@@ -92,8 +93,8 @@ class MediaPipeRecognizerTest {
       userLandmarks.add(new HandLandmark(i * 0.05, i * 0.05, i * 0.05));
     }
 
-    GestureDefinition farVariant = new GestureDefinition("A", farLandmarks);
-    GestureDefinition perfectVariant = new GestureDefinition("A", perfectLandmarks);
+    GestureDefinition farVariant = new StaticGestureDefinition("A", farLandmarks);
+    GestureDefinition perfectVariant = new StaticGestureDefinition("A", perfectLandmarks);
 
     List<GestureDefinition> multiVariants = new ArrayList<>();
     multiVariants.add(farVariant);
@@ -115,7 +116,7 @@ class MediaPipeRecognizerTest {
       zeroReference.add(new HandLandmark(0.0, 0.0, 0.0));
     }
     List<GestureDefinition> zeroVariants = new ArrayList<>();
-    zeroVariants.add(new GestureDefinition("Z", zeroReference));
+    zeroVariants.add(new StaticGestureDefinition("Z", zeroReference));
     RecognitionResult result = recognizer.recognize(zeroLandmarks, zeroVariants);
     assertEquals(1.0, result.getConfidenceScore(), 0.0001);
   }
@@ -129,7 +130,7 @@ class MediaPipeRecognizerTest {
       negativeReference.add(new HandLandmark(-0.5, -0.3, -0.1));
     }
     List<GestureDefinition> negativeVariants = new ArrayList<>();
-    negativeVariants.add(new GestureDefinition("N", negativeReference));
+    negativeVariants.add(new StaticGestureDefinition("N", negativeReference));
     RecognitionResult result = recognizer.recognize(negativeLandmarks, negativeVariants);
     assertEquals(1.0, result.getConfidenceScore(), 0.0001);
   }

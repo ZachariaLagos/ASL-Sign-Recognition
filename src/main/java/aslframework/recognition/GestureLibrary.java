@@ -1,6 +1,7 @@
 package aslframework.recognition;
 
 import aslframework.model.GestureDefinition;
+import aslframework.model.StaticGestureDefinition;
 import aslframework.model.HandLandmark;
 
 import java.io.IOException;
@@ -118,7 +119,7 @@ public class GestureLibrary {
     for (double angleDeg : ROTATION_ANGLES_DEG){
       double angleRad = Math.toRadians(angleDeg);
       List<HandLandmark> rotated = rotateLandmarks(baseLandmarks, angleRad);
-      variants.add(new GestureDefinition(letter, rotated));
+      variants.add(new StaticGestureDefinition(letter, rotated));
     }
 
     return variants;

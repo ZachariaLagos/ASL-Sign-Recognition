@@ -3,6 +3,7 @@ package aslframework.recognition;
 import aslframework.model.GestureDefinition;
 import aslframework.model.HandLandmark;
 import aslframework.model.RecognitionResult;
+import aslframework.model.StaticGestureDefinition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,8 +29,8 @@ class MockGestureRecognizerTest {
     }
     // Build a small variants list with two rotations
     variants = new ArrayList<>();
-    variants.add(new GestureDefinition("A", dummyLandmarks));
-    variants.add(new GestureDefinition("A", dummyLandmarks));
+    variants.add(new StaticGestureDefinition("A", dummyLandmarks));
+    variants.add(new StaticGestureDefinition("A", dummyLandmarks));
   }
 
   // --- Valid confidence values ---

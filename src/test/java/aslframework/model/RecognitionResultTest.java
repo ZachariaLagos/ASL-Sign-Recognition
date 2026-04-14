@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class RecognitionResultTest {
 
-  private GestureDefinition gestureA;
+  private StaticGestureDefinition gestureA;
 
   @BeforeEach
   void setUp() {
@@ -22,7 +22,7 @@ class RecognitionResultTest {
     for (int i = 0; i < 21; i++) {
       landmarks.add(new HandLandmark(i * 0.01, i * 0.02, i * 0.03));
     }
-    gestureA = new GestureDefinition("A", landmarks);
+    gestureA = new StaticGestureDefinition("A", landmarks);
   }
 
   // --- Constructor & Getters ---
