@@ -95,10 +95,15 @@ public class GestureLibrary {
       if (Files.exists(filePath)) {
         try {
           String json = new String(Files.readAllBytes(filePath));
-          List<HandLandmark> baseLandmarks = parseLandmarks(json);
-          List<GestureDefinition> variants = generateVariants(letter, baseLandmarks);
+          List<List<HandLandmark>> allCaptures = parseCaptures(json);
+          List<GestureDefinition> variants = new ArrayList<>();
+          for (List<HandLandmark> capture : allCaptures) {
+            variants.addAll(generateVariants(letter, capture));
+          }
           gestures.put(letter, variants);
-          System.out.println("Loaded gesture: " + letter + " (" +variants.size() + " variants)");
+          System.out.println("Loaded gesture: " + letter + " ("
+              + allCaptures.size() + " captures, "
+              + variants.size() + " variants)");
         } catch (Exception e) {
           System.err.println("Failed to load gesture " + letter + ": " + e.getMessage());
         }
@@ -131,6 +136,12 @@ public class GestureLibrary {
    * @return list of parsed HandLandmark objects
    * @throws IllegalArgumentException if no landmarks can be parsed
    */
+  /**
+   * Parses a single landmarks array from a JSON string segment.
+   *
+   * @param json a JSON string segment starting after the "landmarks" key
+   * @return list of parsed HandLandmark objects, empty if none found
+   */
   private List<HandLandmark> parseLandmarks(String json) {
     List<HandLandmark> landmarks = new ArrayList<>();
     Matcher matcher = LANDMARK_PATTERN.matcher(json);
@@ -142,10 +153,36 @@ public class GestureLibrary {
       landmarks.add(new HandLandmark(x, y, z));
     }
 
-    if (landmarks.isEmpty()) {
-      throw new IllegalArgumentException("No landmarks found in JSON");
+    return landmarks;
+  }
+
+
+
+  /**
+   * Parses the captures array from a variant JSON file.
+   *
+   * @param json the full JSON string of a gesture file
+   * @return list of parsed HandLandmark objects
+   * @throws IllegalArgumentException if no landmarks can be parsed
+   */
+  private List<List<HandLandmark>> parseCaptures(String json) {
+    List<List<HandLandmark>> allCaptures = new ArrayList<>();
+
+    // Split on "landmarks" key to find each capture's landmark array
+    String[] parts = json.split("\"landmarks\"");
+
+    // parts[0] is everything before first landmarks key, skip it
+    for (int i = 1; i < parts.length; i++) {
+      List<HandLandmark> landmarks = parseLandmarks(parts[i]);
+      if (!landmarks.isEmpty()) {
+        allCaptures.add(LandmarkUtils.normalize(landmarks));
+      }
     }
 
-    return LandmarkUtils.normalize(landmarks);
+    if (allCaptures.isEmpty()) {
+      throw new IllegalArgumentException("No captures found in JSON");
+    }
+
+    return allCaptures;
   }
 }

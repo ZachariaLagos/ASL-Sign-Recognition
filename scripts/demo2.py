@@ -63,26 +63,26 @@ def rotate_landmarks(landmarks, angle_deg):
 # ── GestureLibrary (mirrors GestureLibrary.java) ───────────────────────────────
 
 def load_reference_data():
-  """
-  Load reference JSON files, normalize relative to wrist, then generate
-  rotated variants. Mirrors GestureLibrary.parseLandmarks() + generateVariants().
-  """
   gestures = {}
   for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
     path = os.path.join(REFERENCE_DIR, f"{letter}.json")
     if os.path.exists(path):
       with open(path) as f:
-        raw = json.load(f)["landmarks"]
+        data = json.load(f)
 
-      # Step 1: normalize - mirrors parseLandmarks() -> LandmarkUtils.normalize()
-      base = normalize(raw)
+      variants = []
 
-      # Step 2: generate rotated variants - mirrors generateVariants()
-      variants = [rotate_landmarks(base, angle) for angle in ROTATION_ANGLES]
-      gestures[letter] = variants
+      # New multi-capture format
+      for capture in data.get("captures", []):
+        base = normalize(capture["landmarks"])
+        for angle in ROTATION_ANGLES:
+          variants.append(rotate_landmarks(base, angle))
+
+      if variants:
+        gestures[letter] = variants
 
   print(f"Loaded {len(gestures)} reference gestures "
-        f"({len(ROTATION_ANGLES)} variants each)")
+        f"({len(ROTATION_ANGLES)} variants per capture)")
   return gestures
 
 
