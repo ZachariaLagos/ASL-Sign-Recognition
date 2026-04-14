@@ -7,14 +7,14 @@ package aslframework.model;
 public abstract class GestureDefinition {
 
   /**
-   * Returns the name of the ASL gesture (e.g. "A", "J").
+   * Returns the name of the ASL gesture (e.g. "A", "B", "C")
    *
    * @return the gesture name
    */
   public abstract String getGestureName();
 
   /**
-   * Returns the type of this gesture - static or dynamic.
+   * Returns the type of this gesture - static or dynamic
    *
    * @return the GestureType
    */

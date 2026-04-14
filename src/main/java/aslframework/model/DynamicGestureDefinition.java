@@ -1,11 +1,13 @@
 package aslframework.model;
 
+//NOTE!! FUTURE WORK: This class is a stub - this will capture motion instead of static images
+
 import java.util.List;
 
 /**
  * Represents a dynamic ASL gesture defined by a sequence of hand poses over time.
  * Used for motion-based letters such as J and Z.
- * NOTE!!: This class is a stub - full implementation to be completed in a future iteration.
+ *
  */
 public class DynamicGestureDefinition extends GestureDefinition {
 

@@ -252,7 +252,14 @@ def load_reference(letter):
   if not os.path.exists(path):
     return None
   with open(path) as f:
-    return json.load(f)["landmarks"]
+    data = json.load(f)
+
+  # New multi-capture format - use first capture for testing
+  if "captures" in data:
+    return data["captures"][0]["landmarks"]
+
+  # Old format fallback
+  return data["landmarks"]
 
 
 def main():
