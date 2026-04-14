@@ -51,25 +51,26 @@ class MediaPipeRecognizerTest {
 
   @Test
   void testKnownDistanceReturnsExpectedConfidence() {
-    // Shift every landmark by (1.0, 0.0, 0.0) - each distance = 1.0, avg = 1.0
-    // Expected confidence = 1.0 / (1.0 + 1.0) = 0.5
     List<HandLandmark> shiftedLandmarks = new ArrayList<>();
-    for (int i = 0; i < 21; i++) {
+    shiftedLandmarks.add(new HandLandmark(0.0, 0.0, 0.0)); // wrist unchanged
+    for (int i = 1; i < 21; i++) {
       shiftedLandmarks.add(new HandLandmark(i * 0.01 + 1.0, i * 0.02, i * 0.03));
     }
     RecognitionResult result = recognizer.recognize(shiftedLandmarks, variants);
-    assertEquals(0.5, result.getConfidenceScore(), 0.0001);
+    assertEquals(0.5121951219512195, result.getConfidenceScore(), 0.0001);
   }
 
   @Test
   void testLowConfidenceReturnsFalseIsMatch() {
     List<HandLandmark> farLandmarks = new ArrayList<>();
-    for (int i = 0; i < 21; i++) {
+    farLandmarks.add(new HandLandmark(0.0, 0.0, 0.0)); // wrist unchanged
+    for (int i = 1; i < 21; i++) {
       farLandmarks.add(new HandLandmark(i * 0.01 + 100.0, i * 0.02, i * 0.03));
     }
     RecognitionResult result = recognizer.recognize(farLandmarks, variants);
     assertFalse(result.isMatch());
   }
+
 
   @Test
   void testClosestMatchIsTargetGesture() {
@@ -126,11 +127,11 @@ class MediaPipeRecognizerTest {
     List<HandLandmark> negativeLandmarks = new ArrayList<>();
     List<HandLandmark> negativeReference = new ArrayList<>();
     for (int i = 0; i < 21; i++) {
-      negativeLandmarks.add(new HandLandmark(-0.5, -0.3, -0.1));
-      negativeReference.add(new HandLandmark(-0.5, -0.3, -0.1));
+      negativeLandmarks.add(new HandLandmark(-0.5 + i * 0.01, -0.3 + i * 0.02, -0.1 + i * 0.03));
+      negativeReference.add(new HandLandmark(-0.5 + i * 0.01, -0.3 + i * 0.02, -0.1 + i * 0.03));
     }
     List<GestureDefinition> negativeVariants = new ArrayList<>();
-    negativeVariants.add(new StaticGestureDefinition("N", negativeReference));
+    negativeVariants.add(new StaticGestureDefinition("N", LandmarkUtils.normalize(negativeReference)));
     RecognitionResult result = recognizer.recognize(negativeLandmarks, negativeVariants);
     assertEquals(1.0, result.getConfidenceScore(), 0.0001);
   }

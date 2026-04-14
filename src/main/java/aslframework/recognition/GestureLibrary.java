@@ -113,44 +113,16 @@ public class GestureLibrary {
    * @param baseLandmarks   the original captured landmarks
    * @return  list of GestureDefinition objects, one per rotation angle
    */
-  private List<GestureDefinition> generateVariants(String letter, List<HandLandmark> baseLandmarks){
+  private List<GestureDefinition> generateVariants(String letter, List<HandLandmark> baseLandmarks) {
     List<GestureDefinition> variants = new ArrayList<>();
-
-    for (double angleDeg : ROTATION_ANGLES_DEG){
+    for (double angleDeg : ROTATION_ANGLES_DEG) {
       double angleRad = Math.toRadians(angleDeg);
-      List<HandLandmark> rotated = rotateLandmarks(baseLandmarks, angleRad);
+      List<HandLandmark> rotated = LandmarkUtils.rotateLandmarks(baseLandmarks, angleRad);
       variants.add(new StaticGestureDefinition(letter, rotated));
     }
-
     return variants;
   }
 
-  /**
-   * Rotates a list of landmarks around the centroid of the hand in the x/y plane.
-   *
-   * @param landmarks the original landmarks to rotate
-   * @param angleRad the rotation angle in radians
-   * @return a new list of rotated HandLandmark objects
-   */
-
-  private List<HandLandmark> rotateLandmarks(List<HandLandmark> landmarks, double angleRad){
-    // Compute Centroid
-    double cx = landmarks.stream().mapToDouble(HandLandmark::getX).average().orElse(0.5);
-    double cy = landmarks.stream().mapToDouble(HandLandmark::getY).average().orElse(0.5);
-
-    double cos = Math.cos(angleRad);
-    double sin = Math.sin(angleRad);
-
-    List<HandLandmark> rotated = new ArrayList<>();
-    for (HandLandmark lm:landmarks){
-      double dx = lm.getX() - cx;
-      double dy = lm.getY() - cy;
-      double newX = cx + (dx * cos - dy * sin);
-      double newY = cy + (dx * sin + dy * cos);
-      rotated.add(new HandLandmark(newX, newY, lm.getZ())); // z  unchanged
-    }
-    return rotated;
-  }
 
   /**
    * Parses the landmarks array from a gesture JSON file.
@@ -174,6 +146,6 @@ public class GestureLibrary {
       throw new IllegalArgumentException("No landmarks found in JSON");
     }
 
-    return landmarks;
+    return LandmarkUtils.normalize(landmarks);
   }
 }
