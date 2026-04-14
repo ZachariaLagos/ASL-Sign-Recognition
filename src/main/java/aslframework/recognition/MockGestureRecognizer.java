@@ -8,18 +8,18 @@ import java.util.List;
 
 /**
  * A test-only implementation of {@link GestureRecognizer} that returns
- * a configurable, hardcoded recognition result.
+ * a configurable, hardcoded recognition result
  *
- * <p>This class is intended for use in unit tests and development only.
+ * <p>This class is intended for use in unit tests and development only
  * It allows teammates to build and test game logic against predictable
- * recognizer output without requiring MediaPipe or a live camera feed.</p>
+ * recognizer output without requiring MediaPipe or a live camera feed</p>
  */
 public class MockGestureRecognizer implements GestureRecognizer {
 
   private final double fixedConfidence;
 
   /**
-   * Constructs a MockGestureRecognizer that always returns the given confidence score.
+   * Constructs a MockGestureRecognizer that always returns the given confidence score
    *
    * @param fixedConfidence the confidence score to return on every recognize() call,
    *                        between 0.0 and 1.0
@@ -34,15 +34,15 @@ public class MockGestureRecognizer implements GestureRecognizer {
   }
 
   /**
-   * Returns a hardcoded RecognitionResult using the configured confidence score.
-   * The target gesture is passed through as the closest match regardless of landmarks.
+   * Returns a hardcoded RecognitionResult using the configured confidence score
+   * The target gesture is passed through as the closest match regardless of landmarks
    *
    * @param userLandmarks  the user's hand landmarks (ignored in this mock)
    * @param targetGesture  the target gesture, returned as the closest match
    * @return a RecognitionResult with the fixed confidence score
    */
   @Override
-  public RecognitionResult recognize(List<HandLandmark> userLandmarks, GestureDefinition targetGesture) {
-    return new RecognitionResult(fixedConfidence, targetGesture);
+  public RecognitionResult recognize(List<HandLandmark> userLandmarks, List<GestureDefinition> targetGesture) {
+    return new RecognitionResult(fixedConfidence, targetGesture.get(0));
   }
 }

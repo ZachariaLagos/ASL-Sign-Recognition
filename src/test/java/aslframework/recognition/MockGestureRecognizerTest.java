@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class MockGestureRecognizerTest {
 
-  private GestureDefinition gestureA;
+  private List<GestureDefinition> variants;
   private List<HandLandmark> dummyLandmarks;
 
   @BeforeEach
@@ -26,7 +26,10 @@ class MockGestureRecognizerTest {
     for (int i = 0; i < 21; i++) {
       dummyLandmarks.add(new HandLandmark(i * 0.01, i * 0.02, i * 0.03));
     }
-    gestureA = new GestureDefinition("A", dummyLandmarks);
+    // Build a small variants list with two rotations
+    variants = new ArrayList<>();
+    variants.add(new GestureDefinition("A", dummyLandmarks));
+    variants.add(new GestureDefinition("A", dummyLandmarks));
   }
 
   // --- Valid confidence values ---
@@ -34,42 +37,42 @@ class MockGestureRecognizerTest {
   @Test
   void testRecognizeReturnsConfiguredConfidenceScore() {
     MockGestureRecognizer recognizer = new MockGestureRecognizer(0.95);
-    RecognitionResult result = recognizer.recognize(dummyLandmarks, gestureA);
+    RecognitionResult result = recognizer.recognize(dummyLandmarks, variants);
     assertEquals(0.95, result.getConfidenceScore());
   }
 
   @Test
-  void testRecognizeReturnsTargetAsClosestMatch() {
+  void testRecognizeReturnsFirstVariantAsClosestMatch() {
     MockGestureRecognizer recognizer = new MockGestureRecognizer(0.95);
-    RecognitionResult result = recognizer.recognize(dummyLandmarks, gestureA);
-    assertEquals(gestureA, result.getClosestMatch());
+    RecognitionResult result = recognizer.recognize(dummyLandmarks, variants);
+    assertEquals(variants.get(0), result.getClosestMatch());
   }
 
   @Test
   void testRecognizeIsMatchTrueWhenHighConfidence() {
     MockGestureRecognizer recognizer = new MockGestureRecognizer(0.95);
-    RecognitionResult result = recognizer.recognize(dummyLandmarks, gestureA);
+    RecognitionResult result = recognizer.recognize(dummyLandmarks, variants);
     assertTrue(result.isMatch());
   }
 
   @Test
   void testRecognizeIsMatchFalseWhenLowConfidence() {
     MockGestureRecognizer recognizer = new MockGestureRecognizer(0.50);
-    RecognitionResult result = recognizer.recognize(dummyLandmarks, gestureA);
+    RecognitionResult result = recognizer.recognize(dummyLandmarks, variants);
     assertFalse(result.isMatch());
   }
 
   @Test
   void testRecognizeAtBoundaryConfidence() {
     MockGestureRecognizer recognizer = new MockGestureRecognizer(0.0);
-    RecognitionResult result = recognizer.recognize(dummyLandmarks, gestureA);
+    RecognitionResult result = recognizer.recognize(dummyLandmarks, variants);
     assertEquals(0.0, result.getConfidenceScore());
   }
 
   @Test
   void testRecognizeAtMaxConfidence() {
     MockGestureRecognizer recognizer = new MockGestureRecognizer(1.0);
-    RecognitionResult result = recognizer.recognize(dummyLandmarks, gestureA);
+    RecognitionResult result = recognizer.recognize(dummyLandmarks, variants);
     assertEquals(1.0, result.getConfidenceScore());
   }
 

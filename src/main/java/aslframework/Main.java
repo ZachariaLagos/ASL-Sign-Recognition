@@ -43,7 +43,7 @@ public class Main {
         String bestLetter = null;
         double bestScore = -1;
 
-        for (Map.Entry<String, GestureDefinition> entry : library.getAllGestures().entrySet()) {
+        for (Map.Entry<String, List<GestureDefinition>> entry : library.getAllGestures().entrySet()) {
           RecognitionResult result = recognizer.recognize(landmarks, entry.getValue());
           if (result.getConfidenceScore() > bestScore) {
             bestScore = result.getConfidenceScore();

@@ -24,9 +24,9 @@ public class LearningSessionTest {
   private static final double PASSING_CONFIDENCE = 0.9;
   private static final double FAILING_CONFIDENCE = 0.5;
 
-  private GestureDefinition gestureA;
-  private GestureChallenge  easyChallenge;
-  private UserProgress      userProgress;
+  private List<GestureDefinition> variantsA;
+  private GestureChallenge easyChallenge;
+  private UserProgress userProgress;
 
   @BeforeEach
   void setUp() {
@@ -34,20 +34,18 @@ public class LearningSessionTest {
     for (int i = 0; i < 21; i++) {
       landmarks.add(new HandLandmark(i * 0.01, i * 0.02, i * 0.03));
     }
-    gestureA      = new GestureDefinition("A", landmarks);
-    easyChallenge = new GestureChallenge(gestureA, 1);
-    userProgress  = new UserProgress("user_001");
+    GestureDefinition gestureA = new GestureDefinition("A", landmarks);
+    variantsA = new ArrayList<>();
+    variantsA.add(gestureA);
+    easyChallenge = new GestureChallenge(variantsA, 1);
+    userProgress = new UserProgress("user_001");
   }
-
-  // Testing a passing attempt
 
   @Test
   void testAttempt_passing_returnsNonNullRecord() {
     LearningSession session = new LearningSession(
         new MockGestureRecognizer(PASSING_CONFIDENCE), userProgress);
-
     AttemptRecord record = session.attempt(new byte[0], easyChallenge);
-
     assertNotNull(record);
   }
 
@@ -55,7 +53,6 @@ public class LearningSessionTest {
   void testAttempt_passing_levelIsIncremented() {
     LearningSession session = new LearningSession(
         new MockGestureRecognizer(PASSING_CONFIDENCE), userProgress);
-
     assertEquals(0, userProgress.getLevelsCompleted());
     session.attempt(new byte[0], easyChallenge);
     assertEquals(1, userProgress.getLevelsCompleted());
@@ -65,21 +62,15 @@ public class LearningSessionTest {
   void testAttempt_passing_attemptIsStoredInProgress() {
     LearningSession session = new LearningSession(
         new MockGestureRecognizer(PASSING_CONFIDENCE), userProgress);
-
     session.attempt(new byte[0], easyChallenge);
-
     assertEquals(1, userProgress.getAttempts().size());
   }
-
-  // Testing a failing attempt
 
   @Test
   void testAttempt_failing_levelIsNotIncremented() {
     LearningSession session = new LearningSession(
         new MockGestureRecognizer(FAILING_CONFIDENCE), userProgress);
-
     session.attempt(new byte[0], easyChallenge);
-
     assertEquals(0, userProgress.getLevelsCompleted());
   }
 
@@ -87,23 +78,17 @@ public class LearningSessionTest {
   void testAttempt_failing_attemptIsStillRecorded() {
     LearningSession session = new LearningSession(
         new MockGestureRecognizer(FAILING_CONFIDENCE), userProgress);
-
     session.attempt(new byte[0], easyChallenge);
-
     assertEquals(1, userProgress.getAttempts().size());
   }
-
-  // Testing multiple attempts
 
   @Test
   void testAttempt_multipleAttempts_allAreRecorded() {
     LearningSession session = new LearningSession(
         new MockGestureRecognizer(PASSING_CONFIDENCE), userProgress);
-
     session.attempt(new byte[0], easyChallenge);
     session.attempt(new byte[0], easyChallenge);
     session.attempt(new byte[0], easyChallenge);
-
     assertEquals(3, userProgress.getAttempts().size());
   }
 
@@ -111,10 +96,8 @@ public class LearningSessionTest {
   void testAttempt_multiplePassingAttempts_levelCountsCorrectly() {
     LearningSession session = new LearningSession(
         new MockGestureRecognizer(PASSING_CONFIDENCE), userProgress);
-
     session.attempt(new byte[0], easyChallenge);
     session.attempt(new byte[0], easyChallenge);
-
     assertEquals(2, userProgress.getLevelsCompleted());
   }
 }

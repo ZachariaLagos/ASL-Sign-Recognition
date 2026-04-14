@@ -24,5 +24,5 @@ public interface GestureRecognizer {
    * @param targetGesture  the reference gesture definition to compare against
    * @return a RecognitionResult containing the confidence score and match status
    */
-  RecognitionResult recognize(List<HandLandmark> userLandmarks, GestureDefinition targetGesture);
+  RecognitionResult recognize(List<HandLandmark> userLandmarks, List<GestureDefinition> targetGesture);
 }

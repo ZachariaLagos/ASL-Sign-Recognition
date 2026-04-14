@@ -17,10 +17,13 @@ import java.util.regex.Pattern;
 
 /**
  * Loads and provides access to ASL reference gesture definitions from JSON files.
- * Each JSON file in the reference data directory represents one ASL letter (A-Z)
- * and contains 21 hand landmark coordinates captured via MediaPipe.
+ * Each JSON file represents one ASL letter (A-Z) and contains 21 hand landmark coordinates
+ * captured via MediaPipe.
  *
- * <p>Reference data files are expected at: {@code scripts/reference_data/<LETTER>.json}</p>
+ * <p>For each letter, multiple rotated variants are generated at load time to improve
+ * recognition robustness against wrist rotation variation.</p>
+ *
+ * <p>Reference data files are expected at {@code scripts/reference_data/<LETTER>.json}</p>
  */
 public class GestureLibrary {
 
@@ -28,11 +31,13 @@ public class GestureLibrary {
   private static final Pattern LANDMARK_PATTERN =
       Pattern.compile("\"x\":\\s*([^,\\n]+),\\s*\"y\":\\s*([^,\\n]+),\\s*\"z\":\\s*([^,\\n}]+)");
 
-  private final Map<String, GestureDefinition> gestures;
+  private static final double[] ROTATION_ANGLES_DEG = {-15, -10, -5, 0, 5, 10, 15};
+
+  private final Map<String, List<GestureDefinition>> gestures;
 
   /**
    * Constructs a GestureLibrary by loading all available reference JSON files.
-   * Letters with missing files are silently skipped.
+   * and generating rotated variants for each gesture.
    *
    * @throws IOException if the reference data directory cannot be read
    */
@@ -42,21 +47,22 @@ public class GestureLibrary {
   }
 
   /**
-   * Returns the GestureDefinition for the given letter.
+   * Returns all the variants (original + rotated) for the given letter.
    *
    * @param letter the ASL letter (e.g. "A", "B")
-   * @return the corresponding GestureDefinition, or null if not loaded
+   * @return unmodifiable list of GestureDefinition variants, or null if not loaded
    */
-  public GestureDefinition getGesture(String letter) {
-    return gestures.get(letter.toUpperCase());
+  public List<GestureDefinition> getGestureVariants(String letter) {
+    List<GestureDefinition> variants = gestures.get(letter.toUpperCase());
+    return variants != null ? Collections.unmodifiableList(variants) :null;
   }
 
   /**
    * Returns an unmodifiable map of all loaded gesture definitions keyed by letter.
    *
-   * @return map of letter to GestureDefinition
+   * @return map of letter to list of GestureDefinition variants
    */
-  public Map<String, GestureDefinition> getAllGestures() {
+  public Map<String, List<GestureDefinition>> getAllGestures() {
     return Collections.unmodifiableMap(gestures);
   }
 
@@ -70,7 +76,7 @@ public class GestureLibrary {
   }
 
   /**
-   * Loads all gesture JSON files from the reference data directory.
+   * Loads all gesture JSON files from the reference data directory
    *
    * @throws IOException if the directory cannot be accessed
    */
@@ -88,14 +94,61 @@ public class GestureLibrary {
       if (Files.exists(filePath)) {
         try {
           String json = new String(Files.readAllBytes(filePath));
-          List<HandLandmark> landmarks = parseLandmarks(json);
-          gestures.put(letter, new GestureDefinition(letter, landmarks));
-          System.out.println("Loaded gesture: " + letter);
+          List<HandLandmark> baseLandmarks = parseLandmarks(json);
+          List<GestureDefinition> variants = generateVariants(letter, baseLandmarks);
+          gestures.put(letter, variants);
+          System.out.println("Loaded gesture: " + letter + " (" +variants.size() + " variants)");
         } catch (Exception e) {
           System.err.println("Failed to load gesture " + letter + ": " + e.getMessage());
         }
       }
     }
+  }
+
+  /**
+   * Generates rotated variants of a gesture's landmarks across predefined angles.
+   *
+   * @param letter          the ASL letter this gesture represents
+   * @param baseLandmarks   the original captured landmarks
+   * @return  list of GestureDefinition objects, one per rotation angle
+   */
+  private List<GestureDefinition> generateVariants(String letter, List<HandLandmark> baseLandmarks){
+    List<GestureDefinition> variants = new ArrayList<>();
+
+    for (double angleDeg : ROTATION_ANGLES_DEG){
+      double angleRad = Math.toRadians(angleDeg);
+      List<HandLandmark> rotated = rotateLandmarks(baseLandmarks, angleRad);
+      variants.add(new GestureDefinition(letter, rotated));
+    }
+
+    return variants;
+  }
+
+  /**
+   * Rotates a list of landmarks around the centroid of the hand in the x/y plane.
+   *
+   * @param landmarks the original landmarks to rotate
+   * @param angleRad the rotation angle in radians
+   * @return a new list of rotated HandLandmark objects
+   */
+
+  private List<HandLandmark> rotateLandmarks(List<HandLandmark> landmarks, double angleRad){
+    // Compute Centroid
+    double cx = landmarks.stream().mapToDouble(HandLandmark::getX).average().orElse(0.5);
+    double cy = landmarks.stream().mapToDouble(HandLandmark::getY).average().orElse(0.5);
+
+    double cos = Math.cos(angleRad);
+    double sin = Math.sin(angleRad);
+
+    List<HandLandmark> rotated = new ArrayList<>();
+    for (HandLandmark lm:landmarks){
+      double dx = lm.getX() - cx;
+      double dy = lm.getY() - cy;
+      double newX = cx + (dx * cos - dy * sin);
+      double newY = cy + (dx * sin + dy * cos);
+      rotated.add(new HandLandmark(newX, newY, lm.getZ())); // z  unchanged
+    }
+    return rotated;
   }
 
   /**

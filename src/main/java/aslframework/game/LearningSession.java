@@ -69,7 +69,7 @@ public class LearningSession {
     int score = scoringEngine.calculateScore(accuracy, challenge.getDifficultyLevel());
 
     AttemptRecord record = new AttemptRecord(
-        challenge.getTarget().getGestureName(),
+        challenge.getTarget().get(0).getGestureName(),
         accuracy,
         System.currentTimeMillis(),
         passed

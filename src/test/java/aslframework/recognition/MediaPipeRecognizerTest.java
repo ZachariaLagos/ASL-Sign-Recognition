@@ -13,12 +13,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the MediaPipeRecognizer class.
- * Verifies Euclidean distance scoring, confidence normalization, and input validation.
+ * Verifies Euclidean distance scoring, confidence normalization,
+ * variant selection, and input validation.
  */
 class MediaPipeRecognizerTest {
 
   private MediaPipeRecognizer recognizer;
-  private GestureDefinition gestureA;
+  private List<GestureDefinition> variants;
   private List<HandLandmark> referenceLandmarks;
 
   @BeforeEach
@@ -28,20 +29,22 @@ class MediaPipeRecognizerTest {
     for (int i = 0; i < 21; i++) {
       referenceLandmarks.add(new HandLandmark(i * 0.01, i * 0.02, i * 0.03));
     }
-    gestureA = new GestureDefinition("A", referenceLandmarks);
+    // Single variant - original landmarks, no rotation
+    variants = new ArrayList<>();
+    variants.add(new GestureDefinition("A", referenceLandmarks));
   }
 
   // --- Happy path ---
 
   @Test
   void testIdenticalLandmarksReturnsPerfectConfidence() {
-    RecognitionResult result = recognizer.recognize(referenceLandmarks, gestureA);
+    RecognitionResult result = recognizer.recognize(referenceLandmarks, variants);
     assertEquals(1.0, result.getConfidenceScore(), 0.0001);
   }
 
   @Test
   void testIdenticalLandmarksReturnsMatch() {
-    RecognitionResult result = recognizer.recognize(referenceLandmarks, gestureA);
+    RecognitionResult result = recognizer.recognize(referenceLandmarks, variants);
     assertTrue(result.isMatch());
   }
 
@@ -53,25 +56,52 @@ class MediaPipeRecognizerTest {
     for (int i = 0; i < 21; i++) {
       shiftedLandmarks.add(new HandLandmark(i * 0.01 + 1.0, i * 0.02, i * 0.03));
     }
-    RecognitionResult result = recognizer.recognize(shiftedLandmarks, gestureA);
+    RecognitionResult result = recognizer.recognize(shiftedLandmarks, variants);
     assertEquals(0.5, result.getConfidenceScore(), 0.0001);
   }
 
   @Test
   void testLowConfidenceReturnsFalseIsMatch() {
-    // Shift landmarks far away to get low confidence
     List<HandLandmark> farLandmarks = new ArrayList<>();
     for (int i = 0; i < 21; i++) {
       farLandmarks.add(new HandLandmark(i * 0.01 + 100.0, i * 0.02, i * 0.03));
     }
-    RecognitionResult result = recognizer.recognize(farLandmarks, gestureA);
+    RecognitionResult result = recognizer.recognize(farLandmarks, variants);
     assertFalse(result.isMatch());
   }
 
   @Test
   void testClosestMatchIsTargetGesture() {
-    RecognitionResult result = recognizer.recognize(referenceLandmarks, gestureA);
-    assertEquals(gestureA, result.getClosestMatch());
+    RecognitionResult result = recognizer.recognize(referenceLandmarks, variants);
+    assertEquals(variants.get(0), result.getClosestMatch());
+  }
+
+  // --- Variant selection ---
+
+  @Test
+  void testBestVariantIsSelected() {
+    // Add a second variant with landmarks shifted far away (low confidence)
+    // and a third variant identical to user (perfect confidence)
+    List<HandLandmark> farLandmarks = new ArrayList<>();
+    List<HandLandmark> perfectLandmarks = new ArrayList<>();
+    List<HandLandmark> userLandmarks = new ArrayList<>();
+
+    for (int i = 0; i < 21; i++) {
+      farLandmarks.add(new HandLandmark(i * 0.01 + 100.0, i * 0.02, i * 0.03));
+      perfectLandmarks.add(new HandLandmark(i * 0.05, i * 0.05, i * 0.05));
+      userLandmarks.add(new HandLandmark(i * 0.05, i * 0.05, i * 0.05));
+    }
+
+    GestureDefinition farVariant = new GestureDefinition("A", farLandmarks);
+    GestureDefinition perfectVariant = new GestureDefinition("A", perfectLandmarks);
+
+    List<GestureDefinition> multiVariants = new ArrayList<>();
+    multiVariants.add(farVariant);
+    multiVariants.add(perfectVariant);
+
+    RecognitionResult result = recognizer.recognize(userLandmarks, multiVariants);
+    assertEquals(1.0, result.getConfidenceScore(), 0.0001);
+    assertEquals(perfectVariant, result.getClosestMatch());
   }
 
   // --- Edge cases ---
@@ -84,22 +114,23 @@ class MediaPipeRecognizerTest {
       zeroLandmarks.add(new HandLandmark(0.0, 0.0, 0.0));
       zeroReference.add(new HandLandmark(0.0, 0.0, 0.0));
     }
-    GestureDefinition zeroGesture = new GestureDefinition("Z", zeroReference);
-    RecognitionResult result = recognizer.recognize(zeroLandmarks, zeroGesture);
+    List<GestureDefinition> zeroVariants = new ArrayList<>();
+    zeroVariants.add(new GestureDefinition("Z", zeroReference));
+    RecognitionResult result = recognizer.recognize(zeroLandmarks, zeroVariants);
     assertEquals(1.0, result.getConfidenceScore(), 0.0001);
   }
 
   @Test
   void testNegativeCoordinatesHandledCorrectly() {
-    // Identical negative landmarks should still return perfect confidence
     List<HandLandmark> negativeLandmarks = new ArrayList<>();
     List<HandLandmark> negativeReference = new ArrayList<>();
     for (int i = 0; i < 21; i++) {
       negativeLandmarks.add(new HandLandmark(-0.5, -0.3, -0.1));
       negativeReference.add(new HandLandmark(-0.5, -0.3, -0.1));
     }
-    GestureDefinition negativeGesture = new GestureDefinition("N", negativeReference);
-    RecognitionResult result = recognizer.recognize(negativeLandmarks, negativeGesture);
+    List<GestureDefinition> negativeVariants = new ArrayList<>();
+    negativeVariants.add(new GestureDefinition("N", negativeReference));
+    RecognitionResult result = recognizer.recognize(negativeLandmarks, negativeVariants);
     assertEquals(1.0, result.getConfidenceScore(), 0.0001);
   }
 
@@ -112,7 +143,7 @@ class MediaPipeRecognizerTest {
       shortList.add(new HandLandmark(0.0, 0.0, 0.0));
     }
     assertThrows(IllegalArgumentException.class, () -> {
-      recognizer.recognize(shortList, gestureA);
+      recognizer.recognize(shortList, variants);
     });
   }
 
@@ -123,7 +154,7 @@ class MediaPipeRecognizerTest {
       longList.add(new HandLandmark(0.0, 0.0, 0.0));
     }
     assertThrows(IllegalArgumentException.class, () -> {
-      recognizer.recognize(longList, gestureA);
+      recognizer.recognize(longList, variants);
     });
   }
 }

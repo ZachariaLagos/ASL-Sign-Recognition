@@ -17,7 +17,8 @@ import java.util.List;
 public class GestureChallengeTest {
 
   private GestureDefinition gestureB;
-  private GestureChallenge  challenge;
+  private List<GestureDefinition> variantsB;
+  private GestureChallenge challenge;
 
   @BeforeEach
   void setUp() {
@@ -25,15 +26,15 @@ public class GestureChallengeTest {
     for (int i = 0; i < 21; i++) {
       landmarks.add(new HandLandmark(i * 0.01, i * 0.02, i * 0.03));
     }
-    gestureB  = new GestureDefinition("B", landmarks);
-    challenge = new GestureChallenge(gestureB, 2);
+    gestureB = new GestureDefinition("B", landmarks);
+    variantsB = new ArrayList<>();
+    variantsB.add(gestureB);
+    challenge = new GestureChallenge(variantsB, 2);
   }
-
-  // Testing Constructors and Getters
 
   @Test
   void testConstructorSetsTargetGestureCorrectly() {
-    assertEquals("B", challenge.getTarget().getGestureName());
+    assertEquals("B", challenge.getTarget().get(0).getGestureName());
   }
 
   @Test
@@ -43,12 +44,12 @@ public class GestureChallengeTest {
 
   @Test
   void testGetTarget_returnsExactGestureInstance() {
-    assertEquals(gestureB, challenge.getTarget());
+    assertEquals(gestureB, challenge.getTarget().get(0));
   }
 
   @Test
   void testDifficultyLevel_minimumValue_returnsOne() {
-    GestureChallenge minChallenge = new GestureChallenge(gestureB, 1);
+    GestureChallenge minChallenge = new GestureChallenge(variantsB, 1);
     assertEquals(1, minChallenge.getDifficultyLevel());
   }
 }
