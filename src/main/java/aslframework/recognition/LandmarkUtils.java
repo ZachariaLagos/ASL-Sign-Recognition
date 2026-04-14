@@ -20,12 +20,31 @@ public class LandmarkUtils {
    */
   public static List<HandLandmark> normalize(List<HandLandmark> landmarks) {
     HandLandmark wrist = landmarks.get(0);
-    List<HandLandmark> normalized = new ArrayList<>();
+
+    // Translate to wrist origin
+    List<HandLandmark> translated = new ArrayList<>();
     for (HandLandmark lm : landmarks) {
-      normalized.add(new HandLandmark(
+      translated.add(new HandLandmark(
           lm.getX() - wrist.getX(),
           lm.getY() - wrist.getY(),
           lm.getZ() - wrist.getZ()
+      ));
+    }
+
+    // Scale by wrist-to-middle-MCP distance (landmark 9)
+    HandLandmark mid = translated.get(9);
+    double scale = Math.sqrt(mid.getX() * mid.getX() +
+        mid.getY() * mid.getY() +
+        mid.getZ() * mid.getZ());
+
+    if (scale < 1e-9) return translated; // guard against zero division
+
+    List<HandLandmark> normalized = new ArrayList<>();
+    for (HandLandmark lm : translated) {
+      normalized.add(new HandLandmark(
+          lm.getX() / scale,
+          lm.getY() / scale,
+          lm.getZ() / scale
       ));
     }
     return normalized;
@@ -58,4 +77,6 @@ public class LandmarkUtils {
     }
     return rotated;
   }
+
+
 }

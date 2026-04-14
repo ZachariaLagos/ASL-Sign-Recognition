@@ -36,7 +36,15 @@ HAND_CONNECTIONS = [
 ]
 
 
-# ── Rotation logic (mirrors GestureLibrary.java exactly) ───────────────────────
+# ── Normalization + Rotation (mirrors LandmarkUtils.java exactly) ──────────────
+def normalize(landmarks):
+  """Subtract wrist (landmark 0) from all landmarks. Mirrors LandmarkUtils.normalize()."""
+  wrist = landmarks[0]
+  return [{"x": lm["x"] - wrist["x"],
+           "y": lm["y"] - wrist["y"],
+           "z": lm["z"] - wrist["z"]} for lm in landmarks]
+
+
 def compute_centroid(landmarks):
   cx = sum(lm["x"] for lm in landmarks) / len(landmarks)
   cy = sum(lm["y"] for lm in landmarks) / len(landmarks)
@@ -62,6 +70,28 @@ def rotate_landmarks(landmarks, angle_deg):
 
 def generate_variants(landmarks):
   return {angle: rotate_landmarks(landmarks, angle) for angle in ROTATION_ANGLES}
+
+
+def test_normalization(landmarks):
+  """After normalization, wrist (landmark 0) must be at origin (0, 0, 0)."""
+  normalized = normalize(landmarks)
+  assert abs(normalized[0]["x"]) < TOLERANCE, "Wrist x is not 0 after normalization"
+  assert abs(normalized[0]["y"]) < TOLERANCE, "Wrist y is not 0 after normalization"
+  assert abs(normalized[0]["z"]) < TOLERANCE, "Wrist z is not 0 after normalization"
+  print("  PASS  wrist at origin after normalization")
+
+
+def test_normalization_translation_invariant(landmarks):
+  """Normalizing a translated copy must produce identical result to normalizing original."""
+  translated = [{"x": lm["x"] + 0.5, "y": lm["y"] + 0.3, "z": lm["z"] + 0.1}
+                for lm in landmarks]
+  norm_orig  = normalize(landmarks)
+  norm_trans = normalize(translated)
+  for a, b in zip(norm_orig, norm_trans):
+    assert abs(a["x"] - b["x"]) < TOLERANCE, "Translation invariance failed on x"
+    assert abs(a["y"] - b["y"]) < TOLERANCE, "Translation invariance failed on y"
+    assert abs(a["z"] - b["z"]) < TOLERANCE, "Translation invariance failed on z"
+  print("  PASS  normalization is translation-invariant")
 
 
 # ── Mathematical invariant tests ───────────────────────────────────────────────
@@ -237,20 +267,26 @@ def main():
   if test_letter is None:
     print("No reference data found. Run collect_reference_data.py first.")
     print("Using synthetic test landmarks instead...\n")
-    # Synthetic hand-shaped landmarks for testing without real data
     import random
     random.seed(42)
     test_letter = "SYNTHETIC"
-    landmarks = [{"x": 0.5 + random.uniform(-0.2, 0.2),
-                  "y": 0.5 + random.uniform(-0.2, 0.2),
-                  "z": random.uniform(-0.05, 0.05)} for _ in range(21)]
+    raw_landmarks = [{"x": 0.5 + random.uniform(-0.2, 0.2),
+                      "y": 0.5 + random.uniform(-0.2, 0.2),
+                      "z": random.uniform(-0.05, 0.05)} for _ in range(21)]
   else:
-    landmarks = load_reference(test_letter)
+    raw_landmarks = load_reference(test_letter)
     print(f"Loaded reference data for letter '{test_letter}' "
-          f"({len(landmarks)} landmarks)\n")
+          f"({len(raw_landmarks)} landmarks)\n")
+
+  # Normalize first - mirrors GestureLibrary.parseLandmarks() -> LandmarkUtils.normalize()
+  landmarks = normalize(raw_landmarks)
+  print(f"Normalized landmarks: wrist now at ({landmarks[0]['x']:.4f}, {landmarks[0]['y']:.4f}, {landmarks[0]['z']:.4f})\n")
 
   # Run tests
-  print(f"Running rotation invariant tests for '{test_letter}'...")
+  print(f"Running normalization tests for '{test_letter}'...")
+  test_normalization(landmarks)
+  test_normalization_translation_invariant(raw_landmarks)
+  print(f"\nRunning rotation invariant tests for '{test_letter}'...")
   test_landmark_count(landmarks)
   test_zero_rotation_identity(landmarks)
   test_centroid_preserved(landmarks)
@@ -266,7 +302,10 @@ def main():
     if len(all_letters) > 1:
       print(f"Running tests across all {len(all_letters)} reference letters...")
       for letter in all_letters:
-        lms = load_reference(letter)
+        raw = load_reference(letter)
+        lms = normalize(raw)
+        test_normalization(lms)
+        test_normalization_translation_invariant(raw)
         test_centroid_preserved(lms)
         test_z_unchanged(lms)
         test_distances_preserved(lms)
