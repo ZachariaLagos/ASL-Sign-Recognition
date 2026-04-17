@@ -93,29 +93,23 @@ def euclidean_distance(a, b):
 
 
 def recognize(user_landmarks, gestures):
-  """
-  Normalize user landmarks then compare against all variants of all letters.
-  Returns best matching letter and confidence score.
-  Mirrors MediaPipeRecognizer.recognize().
-  """
-  # Normalize user landmarks - mirrors LandmarkUtils.normalize() call in recognize()
   normalized_user = normalize(user_landmarks)
-
   best_letter = None
   best_score  = -1
-
   for letter, variants in gestures.items():
     for ref_landmarks in variants:
-      if len(normalized_user) != len(ref_landmarks):
-        continue
-      total = sum(euclidean_distance(u, r)
-                  for u, r in zip(normalized_user, ref_landmarks))
-      avg   = total / len(ref_landmarks)
-      score = 1.0 / (1.0 + avg)
+      # Cosine similarity - flatten to 63-dim vectors
+      dot = sum(u["x"]*r["x"] + u["y"]*r["y"] + u["z"]*r["z"]
+                for u, r in zip(normalized_user, ref_landmarks))
+      norm_u = sum(u["x"]**2 + u["y"]**2 + u["z"]**2
+                   for u in normalized_user) ** 0.5
+      norm_r = sum(r["x"]**2 + r["y"]**2 + r["z"]**2
+                   for r in ref_landmarks) ** 0.5
+      score = dot / (norm_u * norm_r) if norm_u > 1e-9 and norm_r > 1e-9 else 0.0
+      score = max(0.0, score)
       if score > best_score:
         best_score  = score
         best_letter = letter
-
   return best_letter, best_score
 
 

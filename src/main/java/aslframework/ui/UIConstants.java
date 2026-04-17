@@ -31,7 +31,7 @@ public final class UIConstants {
   public static final String TEXT_GREY  = "#888888";
 
   // Thresholds
-  public static final double PASS_THRESHOLD = 0.75;
+  public static final double PASS_THRESHOLD = 0.85;
   public static final int    REQUIRED_HITS  = 1;
 
   public static VBox styledRoot() {

@@ -47,6 +47,11 @@
       <artifactId>sqlite-jdbc</artifactId>
       <version>3.44.0.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.openpnp</groupId>
+      <artifactId>opencv</artifactId>
+      <version>4.9.0-0</version>
+    </dependency>
 
     <!-- Testing -->
     <dependency>
@@ -67,6 +72,7 @@
       <artifactId>logback-classic</artifactId>
       <version>1.4.7</version>
     </dependency>
+
 
   </dependencies>
 
