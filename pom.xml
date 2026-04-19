@@ -35,7 +35,7 @@
       Or pass it on the command line:
         mvn javafx:run -Dopencv.lib.path=/path/to/opencv/build/lib
     -->
-    <opencv.lib.path>${user.home}/opencv-4.13.0/build/lib</opencv.lib.path>
+    <opencv.lib.path>${user.home}/opencv_build/lib</opencv.lib.path>
   </properties>
 
   <dependencies>
