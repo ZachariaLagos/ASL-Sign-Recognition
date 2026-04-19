@@ -8,6 +8,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
@@ -22,6 +23,7 @@ import org.opencv.videoio.VideoCapture;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * JavaFX UI for the networked battle mode.
@@ -177,10 +179,15 @@ public class NetworkedBattleUI {
   // ── Host ──────────────────────────────────────────────────────────────────
 
   private void startAsHost(String playerName) {
-    showWaiting("Starting server...\nShare your IP: "
-        + BattleServer.getLocalIP()
-        + "  port " + BattleServer.DEFAULT_PORT
-        + "\nWaiting for opponent to connect...");
+    String mobileUrl = "http://" + BattleServer.getLocalIP()
+        + ":" + MobileServer.HTTP_PORT;
+
+    showWaitingWithQR(
+        "Server started  ·  waiting for opponent\n"
+            + "Java client: " + BattleServer.getLocalIP()
+            + "  port " + BattleServer.DEFAULT_PORT + "\n"
+            + "Phone: scan QR code",
+        mobileUrl);
 
     server = new BattleServer(library);
     server.start(BattleServer.DEFAULT_PORT, msg ->
@@ -188,9 +195,8 @@ public class NetworkedBattleUI {
 
     // Host also connects as a client to localhost
     client = new BattleClient(playerName, library);
-    // Give server 500ms to bind before connecting
     new Thread(() -> {
-      try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+      try { Thread.sleep(600); } catch (InterruptedException ignored) {}
       Platform.runLater(() ->
           client.connect("127.0.0.1", BattleServer.DEFAULT_PORT,
               this::onServerMessage,
@@ -264,7 +270,46 @@ public class NetworkedBattleUI {
     });
   }
 
-  // ── Waiting screen ────────────────────────────────────────────────────────
+  // ── Waiting screen with QR ────────────────────────────────────────────────
+
+  private void showWaitingWithQR(String message, String qrUrl) {
+    VBox root = new VBox(20);
+    root.setStyle("-fx-background-color:" + C_BG + ";");
+    root.setAlignment(Pos.CENTER);
+    root.setPadding(new Insets(40));
+
+    Label title = label("NETWORK BATTLE", 13, C_ACCENT);
+    title.setStyle(title.getStyle() + "-fx-letter-spacing:4px;");
+
+    Label msg = label(message, 13, C_TEXT);
+    msg.setWrapText(true);
+    msg.setTextAlignment(TextAlignment.CENTER);
+
+    // QR code
+    javafx.scene.image.WritableImage qr =
+        QRCodeGenerator.generate(qrUrl, 220);
+    javafx.scene.image.ImageView qrView =
+        new javafx.scene.image.ImageView(qr);
+    qrView.setFitWidth(220);
+    qrView.setFitHeight(220);
+
+    Label qrLabel = label("Scan with phone to join", 11, C_MUTED);
+    Label urlLabel = label(qrUrl, 11, C_ACCENT);
+
+    logBox = new VBox(4);
+    logBox.setMaxWidth(500);
+    ScrollPane scroll = new ScrollPane(logBox);
+    scroll.setMaxWidth(500);
+    scroll.setMaxHeight(150);
+    scroll.setStyle("-fx-background-color:transparent; -fx-background:transparent;");
+
+    Button cancel = ghostButton("CANCEL");
+    cancel.setOnAction(e -> { stopAll(); onExit.run(); });
+
+    root.getChildren().addAll(title, msg, qrView, qrLabel, urlLabel,
+        scroll, cancel);
+    stage.setScene(new Scene(root, W, H));
+  }
 
   private void showWaiting(String message) {
     VBox root = new VBox(24);

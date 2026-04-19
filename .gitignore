@@ -56,3 +56,4 @@ logs/
 # Java
 *.class
 *.classpath
+settings.xml

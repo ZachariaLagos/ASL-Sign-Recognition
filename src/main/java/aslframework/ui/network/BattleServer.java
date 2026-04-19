@@ -51,12 +51,13 @@ public class BattleServer {
 
   public static final int DEFAULT_PORT = 55432;
 
-  private final GestureLibrary     library;
-  private ServerSocket             serverSocket;
+  private final GestureLibrary      library;
+  private ServerSocket              serverSocket;
   private final List<ClientHandler> clients = new ArrayList<>();
-  private BattleSession            session;
-  private ExecutorService          executor;
-  private volatile boolean         running = false;
+  private BattleSession             session;
+  private ExecutorService           executor;
+  private volatile boolean          running = false;
+  private MobileServer              mobileServer;
 
   /** Callback to notify the host UI of status messages. */
   private Consumer<String> statusCallback;
@@ -65,12 +66,12 @@ public class BattleServer {
     this.library = library;
   }
 
+  /** Returns the mobile server so the UI can broadcast game events to phones. */
+  public MobileServer getMobileServer() { return mobileServer; }
+
   /**
    * Starts the server on the given port and waits for 2 clients.
-   * Runs entirely on background threads — does not block the caller.
-   *
-   * @param port           TCP port to listen on
-   * @param statusCallback called with human-readable status updates for the host UI
+   * Also starts the mobile HTTP + WebSocket server so phones can join via QR.
    */
   public void start(int port, Consumer<String> statusCallback) {
     this.statusCallback = statusCallback;
@@ -79,6 +80,18 @@ public class BattleServer {
       t.setDaemon(true);
       return t;
     });
+
+    // Start mobile server (HTTP + WebSocket) for phone players
+    mobileServer = new MobileServer(
+        library,
+        this::handleMobileMessage,   // phone → server
+        msg -> log("[Mobile] " + msg)
+    );
+    try {
+      mobileServer.start();
+    } catch (Exception e) {
+      log("Mobile server failed to start: " + e.getMessage());
+    }
 
     executor.submit(() -> {
       try {
@@ -120,6 +133,33 @@ public class BattleServer {
     });
   }
 
+  /** Handles a message arriving from a phone WebSocket client. */
+  private void handleMobileMessage(String json) {
+    // Phone messages use the same protocol as Java TCP clients
+    String type = extractString(json, "type");
+    if (type == null) return;
+
+    if ("JOIN".equals(type)) {
+      // Add a virtual ClientHandler for the phone player
+      String playerId = extractString(json, "player");
+      if (playerId != null) {
+        MobileClientHandler handler = new MobileClientHandler(playerId);
+        clients.add(handler);
+        log("Mobile player joined: " + playerId
+            + " (" + clients.size() + "/2)");
+      }
+    } else if ("ATTEMPT".equals(type)) {
+      String  player     = extractString(json, "player");
+      String  letter     = extractString(json, "letter");
+      double  confidence = extractDouble(json, "confidence");
+      try {
+        submitClientAttempt(player, letter, confidence);
+      } catch (Exception e) {
+        log("Mobile attempt error: " + e.getMessage());
+      }
+    }
+  }
+
   /** Returns this machine's local IP address for clients to connect to. */
   public static String getLocalIP() {
     try {
@@ -134,7 +174,8 @@ public class BattleServer {
     running = false;
     for (ClientHandler c : clients) c.close();
     try { if (serverSocket != null) serverSocket.close(); } catch (IOException ignored) {}
-    if (executor != null) executor.shutdownNow();
+    if (executor     != null) executor.shutdownNow();
+    if (mobileServer != null) mobileServer.stop();
   }
 
   // ── Session launch ────────────────────────────────────────────────────────
@@ -206,11 +247,18 @@ public class BattleServer {
 
     ClientHandler(Socket socket) throws IOException {
       this.socket = socket;
-      this.out    = new PrintWriter(
-          new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), true);
-      this.in     = new BufferedReader(
-          new InputStreamReader(socket.getInputStream(), "UTF-8"));
-      send(json("WAITING", "message", "Waiting for opponent..."));
+      if (socket != null) {
+        this.out = new PrintWriter(
+            new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), true);
+        this.in  = new BufferedReader(
+            new InputStreamReader(socket.getInputStream(), "UTF-8"));
+        send(json("WAITING", "message", "Waiting for opponent..."));
+      }
+    }
+
+    /** No-arg constructor for subclasses that don't use a socket. */
+    ClientHandler() {
+      this.socket = null;
     }
 
     void readLoop() {
@@ -303,6 +351,25 @@ public class BattleServer {
     }
   }
 
+  // ── Mobile client handler (phone via WebSocket) ───────────────────────────
+
+  /**
+   * A virtual ClientHandler for phone players connected via WebSocket.
+   * Sending is handled by {@link MobileServer#broadcastToMobile} — this
+   * handler exists only so the phone player appears in the clients list
+   * and passes the {@link #allJoined()} check.
+   */
+  private class MobileClientHandler extends ClientHandler {
+    MobileClientHandler(String playerId) {
+      super();
+      this.playerId = playerId;
+    }
+
+    @Override void readLoop() {}
+    @Override void send(String message) {}
+    @Override void close() {}
+  }
+
   // ── Utilities ─────────────────────────────────────────────────────────────
 
   private boolean allJoined() {
@@ -312,6 +379,8 @@ public class BattleServer {
 
   private void broadcast(String message) {
     for (ClientHandler c : clients) c.send(message);
+    // Also broadcast to phone clients via WebSocket
+    if (mobileServer != null) mobileServer.broadcastToMobile(message);
   }
 
   private void log(String msg) {

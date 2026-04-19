@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ASL Battle — Mobile</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0D0D0F;
+    color: #E8E8F0;
+    font-family: 'Courier New', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #setup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px;
+    gap: 16px;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  #game { display: none; width: 100%; flex-direction: column; align-items: center; }
+
+  h1 { font-size: 28px; color: #1ABCB8; letter-spacing: 4px; margin-bottom: 8px; }
+  h2 { font-size: 13px; color: #6B6B80; letter-spacing: 3px; }
+
+  input {
+    width: 100%;
+    background: #1E1E26;
+    border: 1px solid #2A2A32;
+    color: #E8E8F0;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    padding: 14px 16px;
+    border-radius: 4px;
+    outline: none;
+  }
+  input:focus { border-color: #1ABCB8; }
+
+  button {
+    width: 100%;
+    padding: 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .btn-primary { background: #1ABCB8; color: #000; }
+  .btn-ghost   {
+    background: transparent;
+    color: #6B6B80;
+    border: 1px solid #2A2A32;
+    margin-top: 4px;
+  }
+
+  #status {
+    font-size: 12px;
+    color: #6B6B80;
+    text-align: center;
+    min-height: 18px;
+  }
+  #status.ok  { color: #1ABCB8; }
+  #status.err { color: #FF6B4A; }
+
+  /* Game screen */
+  #cam-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+  }
+  #cam {
+    width: 100%;
+    border-radius: 0;
+    transform: scaleX(-1);  /* mirror */
+    display: block;
+  }
+  #cam-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  #game-hud {
+    width: 100%;
+    max-width: 420px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  #round-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  #round-num  { font-size: 12px; color: #6B6B80; letter-spacing: 2px; }
+  #status-bar { font-size: 13px; color: #6B6B80; }
+
+  #target-letter {
+    font-size: 80px;
+    font-weight: 900;
+    color: #E8E8F0;
+    text-align: center;
+    line-height: 1;
+  }
+
+  #sign-label {
+    font-size: 11px;
+    color: #6B6B80;
+    letter-spacing: 3px;
+    text-align: center;
+  }
+
+  /* Charge bar */
+  #charge-wrap {
+    width: 100%;
+    background: #2A2A32;
+    border-radius: 3px;
+    height: 10px;
+    overflow: hidden;
+  }
+  #charge-bar {
+    height: 100%;
+    width: 0%;
+    background: #F5A800;
+    border-radius: 3px;
+    transition: width 0.1s linear;
+  }
+
+  #held-letter {
+    font-size: 28px;
+    font-weight: 700;
+    color: #F5A800;
+    text-align: center;
+    min-height: 36px;
+  }
+
+  #cooldown {
+    font-size: 12px;
+    color: #FF6B4A;
+    text-align: center;
+    min-height: 16px;
+  }
+
+  #players {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .player-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot.active    { background: #1ABCB8; }
+  .dot.eliminated{ background: #FF6B4A; }
+
+  #game-log {
+    font-size: 11px;
+    color: #6B6B80;
+    max-height: 80px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 2px;
+  }
+
+  #gameover {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 24px;
+    text-align: center;
+  }
+  #gameover h2 { font-size: 40px; color: #FF6B4A; letter-spacing: 2px; }
+  #winner-text { font-size: 18px; color: #E8E8F0; }
+</style>
+</head>
+<body>
+
+<!-- ── Setup screen ─────────────────────────────────────── -->
+<div id="setup">
+  <h1>ASL</h1>
+  <h2>BATTLE — MOBILE</h2>
+
+  <input id="name-input" type="text" placeholder="Your name" maxlength="20" autocomplete="off">
+
+  <div id="status">Enter your name and connect</div>
+
+  <button class="btn-primary" onclick="connect()">JOIN BATTLE</button>
+</div>
+
+<!-- ── Game screen ─────────────────────────────────────── -->
+<div id="game">
+  <div id="cam-wrap">
+    <video id="cam" autoplay playsinline muted></video>
+    <canvas id="cam-overlay"></canvas>
+  </div>
+
+  <div id="game-hud">
+    <div id="round-info">
+      <span id="round-num">ROUND 0</span>
+      <span id="status-bar">Waiting...</span>
+    </div>
+
+    <div id="target-letter">?</div>
+    <div id="sign-label">SIGN THIS LETTER</div>
+
+    <div id="charge-wrap"><div id="charge-bar"></div></div>
+    <div id="held-letter"></div>
+    <div id="cooldown"></div>
+
+    <div id="players"></div>
+    <div id="game-log"></div>
+  </div>
+</div>
+
+<!-- ── Game over ────────────────────────────────────────── -->
+<div id="gameover">
+  <h2>GAME OVER</h2>
+  <div id="winner-text"></div>
+  <button class="btn-primary" onclick="location.reload()">PLAY AGAIN</button>
+</div>
+
+<!-- ── MediaPipe + game logic ───────────────────────────── -->
+<script type="module">
+import { FilesetResolver, HandLandmarker }
+  from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/vision_bundle.js";
+
+// ── Config ────────────────────────────────────────────────
+const THRESHOLD    = 0.82;
+const HOLD_MS      = 1000;
+const COOLDOWN_MS  = 3000;
+
+// ── State ─────────────────────────────────────────────────
+let ws            = null;
+let playerName    = "";
+let handLandmarker= null;
+let lastVideoTime = -1;
+
+let heldLetter    = null;
+let holdStart     = 0;
+let lastShot      = 0;
+let chargeProgress= 0;
+
+let gameStarted   = false;
+let gameOver      = false;
+
+// ── Connect ───────────────────────────────────────────────
+window.connect = function() {
+  playerName = document.getElementById("name-input").value.trim();
+  if (!playerName) { setStatus("Enter your name first", "err"); return; }
+
+  // WebSocket URL injected by server into this page
+  const wsUrl = "ws://" + WS_HOST + ":" + WS_PORT;
+  setStatus("Connecting to " + wsUrl + "...", "");
+
+  ws = new WebSocket(wsUrl);
+
+  ws.onopen = () => {
+    setStatus("Connected — sending name", "ok");
+    send({ type: "JOIN", player: playerName });
+    showGame();
+    initMediaPipe();
+  };
+
+  ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+
+  ws.onerror = () => setStatus("Connection failed", "err");
+  ws.onclose = () => { if (!gameOver) setStatus("Disconnected", "err"); };
+};
+
+function send(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN)
+    ws.send(JSON.stringify(obj));
+}
+
+// ── MediaPipe init ────────────────────────────────────────
+async function initMediaPipe() {
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+  );
+  handLandmarker = await HandLandmarker.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath:
+        "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+      delegate: "GPU"
+    },
+    runningMode: "VIDEO",
+    numHands: 1,
+    minHandDetectionConfidence: 0.5,
+    minHandPresenceConfidence:  0.5,
+    minTrackingConfidence:      0.5
+  });
+
+  // Start camera
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "user", width: 640, height: 480 }
+  });
+  const video = document.getElementById("cam");
+  video.srcObject = stream;
+  video.addEventListener("loadeddata", () => requestAnimationFrame(detectLoop));
+}
+
+// ── Detection loop ────────────────────────────────────────
+function detectLoop() {
+  if (gameOver) return;
+  requestAnimationFrame(detectLoop);
+
+  const video = document.getElementById("cam");
+  if (video.currentTime === lastVideoTime) return;
+  lastVideoTime = video.currentTime;
+
+  const result = handLandmarker.detectForVideo(video, performance.now());
+  drawLandmarks(result);
+
+  if (!gameStarted || result.landmarks.length === 0) {
+    heldLetter     = null;
+    chargeProgress = 0;
+    updateChargeUI();
+    return;
+  }
+
+  const landmarks = result.landmarks[0];
+  const best      = recognise(landmarks);
+
+  if (best && best.score >= THRESHOLD) {
+    processHold(best.letter, best.score);
+  } else {
+    heldLetter     = null;
+    chargeProgress = 0;
+    updateChargeUI();
+  }
+}
+
+// ── Landmark drawing ──────────────────────────────────────
+function drawLandmarks(result) {
+  const video   = document.getElementById("cam");
+  const canvas  = document.getElementById("cam-overlay");
+  const ctx     = canvas.getContext("2d");
+  canvas.width  = video.videoWidth  || video.clientWidth;
+  canvas.height = video.videoHeight || video.clientHeight;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (!result.landmarks.length) return;
+
+  const lms = result.landmarks[0];
+  const connections = HandLandmarker.HAND_CONNECTIONS;
+
+  ctx.strokeStyle = "#1ABCB8";
+  ctx.lineWidth   = 2;
+  for (const { start, end } of connections) {
+    const s = lms[start], e = lms[end];
+    ctx.beginPath();
+    // Mirror to match video
+    ctx.moveTo((1 - s.x) * canvas.width, s.y * canvas.height);
+    ctx.lineTo((1 - e.x) * canvas.width, e.y * canvas.height);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = "#F5A800";
+  for (const lm of lms) {
+    ctx.beginPath();
+    ctx.arc((1 - lm.x) * canvas.width, lm.y * canvas.height, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ── Simple Euclidean recogniser ───────────────────────────
+// Reference data is embedded by the server when it serves this page.
+// REFERENCE_DATA is a JS object: { "A": [[x,y,z],...21 points], ... }
+
+function euclidean(a, b) {
+  const dx = a.x - b[0], dy = a.y - b[1], dz = a.z - b[2];
+  return Math.sqrt(dx*dx + dy*dy + dz*dz);
+}
+
+function scoreAgainst(landmarks, ref) {
+  let total = 0;
+  for (let i = 0; i < 21; i++) total += euclidean(landmarks[i], ref[i]);
+  return 1.0 / (1.0 + total / 21);
+}
+
+function recognise(landmarks) {
+  if (typeof REFERENCE_DATA === "undefined") return null;
+  let bestLetter = null, bestScore = 0;
+  for (const [letter, ref] of Object.entries(REFERENCE_DATA)) {
+    const score = scoreAgainst(landmarks, ref);
+    if (score > bestScore) { bestScore = score; bestLetter = letter; }
+  }
+  return bestLetter ? { letter: bestLetter, score: bestScore } : null;
+}
+
+// ── Gesture hold / fire ───────────────────────────────────
+function processHold(letter, confidence) {
+  const now = Date.now();
+
+  if (letter === heldLetter) {
+    const held = now - holdStart;
+    chargeProgress = Math.min(1, held / HOLD_MS);
+    updateChargeUI(letter);
+
+    if (held >= HOLD_MS && now - lastShot >= COOLDOWN_MS) {
+      lastShot       = now;
+      heldLetter     = null;
+      chargeProgress = 0;
+      updateChargeUI();
+      send({ type: "ATTEMPT", player: playerName,
+             letter, confidence: confidence.toFixed(3) });
+      addLog("Fired: " + letter);
+    }
+  } else {
+    heldLetter     = letter;
+    holdStart      = now;
+    chargeProgress = 0;
+    updateChargeUI(letter);
+  }
+}
+
+function updateChargeUI(letter) {
+  document.getElementById("charge-bar").style.width =
+      (chargeProgress * 100) + "%";
+  document.getElementById("held-letter").textContent = letter || "";
+
+  const now      = Date.now();
+  const coolLeft = COOLDOWN_MS - (now - lastShot);
+  document.getElementById("cooldown").textContent =
+      coolLeft > 0 ? (coolLeft / 1000).toFixed(1) + "s cooldown" : "";
+}
+
+// ── Server message handler ────────────────────────────────
+function handleMessage(msg) {
+  switch (msg.type) {
+    case "WAITING":
+      setStatus(msg.message || "Waiting...", "");
+      break;
+
+    case "START":
+      gameStarted = true;
+      setStatus("Game started!", "ok");
+      renderPlayers(msg.players, msg.players);
+      addLog("Game started: " + msg.players.join(", "));
+      break;
+
+    case "ROUND":
+      document.getElementById("target-letter").textContent = msg.letter;
+      document.getElementById("round-num").textContent = "ROUND " + msg.round;
+      setStatus(msg.active.length + " players active", "");
+      renderPlayers(msg.active, null);
+      addLog("Round " + msg.round + " — sign: " + msg.letter);
+      break;
+
+    case "ATTEMPT": {
+      const icon = msg.passed ? "✓" : "✗";
+      addLog(icon + " " + msg.player + " → " + msg.letter);
+      break;
+    }
+
+    case "ELIMINATED":
+      addLog("💀 " + msg.player + " eliminated");
+      break;
+
+    case "WINNER":
+      addLog("🏆 Winner: " + msg.winners.join(", "));
+      break;
+
+    case "GAME_OVER":
+      gameOver = true;
+      showGameOver(msg.winners ? msg.winners.join(", ") : "");
+      break;
+  }
+}
+
+// ── UI helpers ────────────────────────────────────────────
+function showGame() {
+  document.getElementById("setup").style.display = "none";
+  document.getElementById("game").style.display  = "flex";
+}
+
+function showGameOver(winner) {
+  document.getElementById("game").style.display     = "none";
+  document.getElementById("gameover").style.display = "flex";
+  document.getElementById("winner-text").textContent =
+      winner ? "Winner: " + winner : "Game over";
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById("status");
+  el.textContent  = msg;
+  el.className    = cls || "";
+}
+
+function renderPlayers(active, all) {
+  const box = document.getElementById("players");
+  if (all) {
+    // Build full list on START
+    box.innerHTML = "";
+    for (const p of all) {
+      const row = document.createElement("div");
+      row.className   = "player-row";
+      row.id          = "player-" + p;
+      row.innerHTML   = `<div class="dot active"></div><span>${p}</span>`;
+      box.appendChild(row);
+    }
+  }
+  // Update dots
+  for (const row of box.querySelectorAll(".player-row")) {
+    const name = row.querySelector("span").textContent;
+    const dot  = row.querySelector(".dot");
+    if (active.includes(name)) {
+      dot.className = "dot active";
+    } else {
+      dot.className = "dot eliminated";
+    }
+  }
+}
+
+function addLog(msg) {
+  const log  = document.getElementById("game-log");
+  const line = document.createElement("div");
+  line.textContent = msg;
+  log.prepend(line);
+  if (log.children.length > 20) log.lastChild.remove();
+}
+</script>
+</body>
+</html>

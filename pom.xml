@@ -18,6 +18,24 @@
     <maven.compiler.target>25</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javafx.version>21.0.2</javafx.version>
+    <!--
+      Set opencv.lib.path to your local OpenCV native library directory.
+      Override this in your ~/.m2/settings.xml:
+
+      <profiles>
+        <profile>
+          <id>opencv-local</id>
+          <activation><activeByDefault>true</activeByDefault></activation>
+          <properties>
+            <opencv.lib.path>/path/to/opencv/build/lib</opencv.lib.path>
+          </properties>
+        </profile>
+      </profiles>
+
+      Or pass it on the command line:
+        mvn javafx:run -Dopencv.lib.path=/path/to/opencv/build/lib
+    -->
+    <opencv.lib.path>${user.home}/opencv-4.13.0/build/lib</opencv.lib.path>
   </properties>
 
   <dependencies>
@@ -58,6 +76,25 @@
       <groupId>org.opencv</groupId>
       <artifactId>opencv</artifactId>
       <version>4.13.0</version>
+    </dependency>
+
+    <!-- ZXing — QR code generation -->
+    <dependency>
+      <groupId>com.google.zxing</groupId>
+      <artifactId>core</artifactId>
+      <version>3.5.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.zxing</groupId>
+      <artifactId>javase</artifactId>
+      <version>3.5.2</version>
+    </dependency>
+
+    <!-- Java-WebSocket — phone browser communication -->
+    <dependency>
+      <groupId>org.java-websocket</groupId>
+      <artifactId>Java-WebSocket</artifactId>
+      <version>1.5.4</version>
     </dependency>
 
     <!-- SQLite JDBC -->
@@ -110,7 +147,7 @@
         <configuration>
           <mainClass>aslframework.ui.Open</mainClass>
           <options>
-            <option>-Djava.library.path=/Users/lizihao/opencv-4.13.0/build/lib</option>
+            <option>-Djava.library.path=${opencv.lib.path}</option>
           </options>
         </configuration>
       </plugin>
@@ -143,7 +180,7 @@
           <systemProperties>
             <systemProperty>
               <key>java.library.path</key>
-              <value>/Users/lizihao/opencv-4.13.0/build/lib</value>
+              <value>${opencv.lib.path}</value>
             </systemProperty>
           </systemProperties>
         </configuration>
