@@ -60,6 +60,7 @@ public class GameUI extends Application {
 
   // ── Live feed ─────────────────────────────────────────────────────────────────
   private ImageView cameraView;
+
   private Label     detectedLetterLabel;
   private Label     confidenceLabel;
 
@@ -232,6 +233,14 @@ public class GameUI extends Application {
     }
   }
 
+  /**
+   * Returns the active {@link CameraService} so callers can push landmark data.
+   * Returns {@code null} if the camera has not started yet.
+   */
+  public CameraService getCameraService() {
+    return cameraService;
+  }
+
   /** Stops the camera capture loop, releases the webcam, and disposes media resources. */
   private void stopCamera() {
     if (cameraService != null) {
@@ -301,18 +310,19 @@ public class GameUI extends Application {
     }
 
     loadInstruction.setFixedSize(ratioW, ratioH);
+
+
   }
 
   private VBox buildFeedPanel() {
     cameraView = new ImageView();
-    cameraView.setPreserveRatio(false);  // stretch to fill entire area
+    cameraView.setPreserveRatio(false);
 
-    // Pane grows with the layout and binds ImageView size to itself
+    // Plain Pane — cameraView fills it, no canvas overlay needed
     Pane feedArea = new Pane(cameraView);
     feedArea.setStyle(BG_PANEL + BORDER);
     VBox.setVgrow(feedArea, Priority.ALWAYS);
 
-    // Bind ImageView size to pane so it always fills the full panel
     cameraView.fitWidthProperty().bind(feedArea.widthProperty());
     cameraView.fitHeightProperty().bind(feedArea.heightProperty());
 
@@ -324,13 +334,31 @@ public class GameUI extends Application {
     confidenceLabel.setFont(Font.font("SansSerif", 14));
     confidenceLabel.setTextFill(Color.web("#b0b0b0"));
 
-    HBox detectionRow = new HBox(20, detectedLetterLabel, confidenceLabel);
-    detectionRow.setAlignment(Pos.CENTER);
+    // Landmarks toggle button — delegates to CameraService
+    Button landmarkBtn = new Button("Landmarks: OFF");
+    landmarkBtn.setFont(Font.font("SansSerif", 12));
+    landmarkBtn.setStyle(styleLandmarkBtn(false));
+    landmarkBtn.setOnAction(e -> {
+      boolean nowOn = landmarkBtn.getText().equals("Landmarks: OFF");
+      landmarkBtn.setText(nowOn ? "Landmarks: ON" : "Landmarks: OFF");
+      landmarkBtn.setStyle(styleLandmarkBtn(nowOn));
+      if (cameraService != null) cameraService.setShowLandmarks(nowOn);
+    });
+
+    HBox detectionRow = new HBox(20, detectedLetterLabel, confidenceLabel, landmarkBtn);
+    detectionRow.setAlignment(Pos.CENTER_LEFT);
     detectionRow.setPadding(new Insets(6, 0, 0, 0));
 
     VBox panel = new VBox(6, sectionLabel("Live Camera Feed"), feedArea, detectionRow);
     panel.setStyle(BG_DARK);
     return panel;
+  }
+
+  private String styleLandmarkBtn(boolean active) {
+    return "-fx-background-color: " + (active ? "#3a7a3a" : "#3a3a3a") + ";" +
+        "-fx-text-fill: "        + (active ? "#aaffaa"  : "#aaaaaa") + ";" +
+        "-fx-background-radius: 6;" +
+        "-fx-cursor: hand;";
   }
 
   private VBox buildInstructionPanel() {
@@ -671,6 +699,7 @@ public class GameUI extends Application {
   public void updateCameraFrame(Image image) {
     Platform.runLater(() -> cameraView.setImage(image));
   }
+
 
   // ── Private helpers ───────────────────────────────────────────────────────────
 
