@@ -70,10 +70,18 @@ public class GameUI extends Application {
   private Label      wrongLabel;        // "Wrong!" overlay
 
   // ── Instruction video ─────────────────────────────────────────────────────────
-  private static final String VIDEO_DIR =
-      System.getProperty("user.home") +
-          "/CS5004_coop/FinalProject/assets/guidance/";
+  private static String VIDEO_DIR = "";   // set via setVideoDir() before launch
   private LoadInstruction loadInstruction;
+
+  /**
+   * Sets the instruction video directory before JavaFX is launched.
+   * Must be called from {@code Main} before {@code Application.launch()}.
+   *
+   * @param dir absolute path to the folder containing a.mp4 ... z.mp4
+   */
+  public static void setVideoDir(String dir) {
+    VIDEO_DIR = dir;
+  }
 
   // ── Lives ─────────────────────────────────────────────────────────────────────
   private static final int MAX_LIVES = 3;

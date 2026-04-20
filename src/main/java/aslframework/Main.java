@@ -9,6 +9,7 @@ import aslframework.recognition.MediaPipeRecognizer;
 import aslframework.ui.CameraService;
 import aslframework.ui.GameUI;
 import aslframework.ui.GestureGate;
+import aslframework.ConfigLoader;
 
 import javafx.application.Application;
 
@@ -24,17 +25,10 @@ import java.util.Map;
  */
 public class Main {
 
-  /**
-   * Absolute path to the OpenCV native library on this machine.
-   * Update this if your OpenCV build is in a different location.
-   */
-  private static final String OPENCV_LIB_PATH =
-      System.getProperty("user.home") +
-          "/opencv-4.13.0/build/lib/libopencv_java4130.dylib";
-
   public static void main(String[] args) throws Exception {
-    // Load OpenCV native library before any OpenCV class is touched
-    CameraService.loadNativeLibrary(OPENCV_LIB_PATH);
+    // Load paths from config.properties — each developer has their own copy
+    ConfigLoader config = new ConfigLoader();
+    CameraService.loadNativeLibrary(config.getOpenCvLibPath());
 
     System.out.println("=== ASL Recognition Platform ===");
     System.out.println("Loading gesture library...");
@@ -46,6 +40,9 @@ public class Main {
       System.err.println("No reference gestures found. Run collect_reference_data.py first.");
       return;
     }
+
+    // Pass video directory to GameUI before launch
+    GameUI.setVideoDir(config.getVideoDir());
 
     // Launch JavaFX — GameUI.getInstance() becomes non-null once start() returns.
     Thread fxThread = new Thread(() -> Application.launch(GameUI.class, args));
