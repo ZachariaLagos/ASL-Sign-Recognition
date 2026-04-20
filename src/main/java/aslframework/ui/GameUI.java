@@ -109,6 +109,9 @@ public class GameUI extends Application {
   private long    holdStartMs   = 0;
   private boolean holdFired     = false;
 
+  // ── Pending video load delay — cancelled on restart to prevent stale loads ────
+  private PauseTransition pendingVideoDelay = null;
+
   // ── Cooldown — blocks recognition for 2s after a decision is made ─────────────
   private static final long COOLDOWN_MS    = 2000;
   private volatile long     cooldownUntil  = 0;
@@ -652,9 +655,16 @@ public class GameUI extends Application {
     holdLetter         = null;
     holdStartMs        = 0;
     holdFired          = false;
+    // Cancel any pending video load from the previous session
+    if (pendingVideoDelay != null) {
+      pendingVideoDelay.stop();
+      pendingVideoDelay = null;
+    }
+
     currentLetterIndex = 0;
     currentTarget      = "A";
     targetLetterLabel.setText("Target: A");
+    loadInstruction.load("A");   // always load A video immediately on restart
 
     System.out.println("Session restarted — lives reset to " + MAX_LIVES);
   }
@@ -671,12 +681,24 @@ public class GameUI extends Application {
     holdStartMs = 0;
     holdFired   = false;
 
-    // Update label immediately, but wait 2s before loading the next video
-    // so the success prompt finishes before the new video starts
     targetLetterLabel.setText("Target: " + currentTarget);
-    PauseTransition delay = new PauseTransition(Duration.millis(2000));
-    delay.setOnFinished(e -> loadInstruction.load(currentTarget));
-    delay.play();
+
+    // Cancel any pending video load from a previous advance
+    if (pendingVideoDelay != null) {
+      pendingVideoDelay.stop();
+    }
+
+    // Snapshot the letter so the closure always loads the right video
+    // even if currentTarget changes before the delay fires
+    final String nextLetter = currentTarget;
+    pendingVideoDelay = new PauseTransition(Duration.millis(2000));
+    pendingVideoDelay.setOnFinished(e -> {
+      // Only load if the target hasn't changed since this delay was created
+      if (nextLetter.equals(currentTarget)) {
+        loadInstruction.load(nextLetter);
+      }
+    });
+    pendingVideoDelay.play();
   }
 
   /**
