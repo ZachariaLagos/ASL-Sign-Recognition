@@ -35,7 +35,7 @@ public class LandmarkBridge {
    */
   public LandmarkBridge() throws LandmarkBridgeException {
     try {
-      ProcessBuilder pb = new ProcessBuilder("python3", SCRIPT_PATH, "--headless");
+      ProcessBuilder pb = new ProcessBuilder("/Users/chengchijiang/CodingEnvironment/mediapipe-venv/bin/python3", SCRIPT_PATH, "--headless");
       pb.redirectErrorStream(false);
       this.process = pb.start();
       this.stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));

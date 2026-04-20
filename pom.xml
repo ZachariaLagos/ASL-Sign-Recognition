@@ -18,7 +18,7 @@
     <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javafx.version>21</javafx.version>
-    <opencv.jar.path>${user.home}/opencv-4.13.0/build/bin/opencv-4130.jar</opencv.jar.path>
+    <opencv.jar.path>/Users/chengchijiang/CodingEnvironment/opencv/build/bin/opencv-4130.jar</opencv.jar.path>
   </properties>
 
   <dependencies>

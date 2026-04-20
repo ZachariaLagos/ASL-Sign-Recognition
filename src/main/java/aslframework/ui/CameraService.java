@@ -85,7 +85,8 @@ public class CameraService {
    * @throws IllegalStateException if the camera cannot be opened
    */
   public CameraService() {
-    capture = new VideoCapture(0);
+    String cameraUrl = new aslframework.ConfigLoader().getCameraUrl();
+    capture = (cameraUrl != null) ? new VideoCapture(cameraUrl) : new VideoCapture(0);
     if (!capture.isOpened()) {
       throw new IllegalStateException(
           "Could not open camera. Make sure no other process is using it.");

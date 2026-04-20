@@ -59,7 +59,19 @@ public class ConfigLoader {
     return require("video.dir");
   }
 
-  // ── Private ───────────────────────────────────────────────────────────────────
+  /**
+   * Returns the camera URL for IP camera streaming, or null if not set.
+   * When null, the default webcam (index 0) will be used.
+   *
+   * @return value of {@code camera.url}, or null if not configured
+   */
+  public String getCameraUrl() {
+    String value = props.getProperty("camera.url");
+    if (value == null || value.isBlank()) return null;
+    return value.trim();
+  }
+
+  // ── Private ─────────────────────────────────────────────────────────────────────────────
 
   private String require(String key) {
     String value = props.getProperty(key);
