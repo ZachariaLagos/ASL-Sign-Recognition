@@ -78,6 +78,10 @@ public class Main {
             }
           }
 
+          // Pass landmarks to CameraService so it can draw them on the Mat if enabled
+          CameraService cs = ui.getCameraService();
+          if (cs != null) cs.setLandmarks(landmarks);
+
           if (bestLetter != null) {
             if (gate.passes(bestScore)) {
               ui.updateDetection(bestLetter, bestScore);
