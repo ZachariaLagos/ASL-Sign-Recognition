@@ -14,41 +14,14 @@
   <description>Interactive ASL learning framework with real-time hand gesture recognition</description>
 
   <properties>
-    <maven.compiler.source>25</maven.compiler.source>
-    <maven.compiler.target>25</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <javafx.version>21.0.2</javafx.version>
-    <!--
-      Set opencv.lib.path to your local OpenCV native library directory.
-      Override this in your ~/.m2/settings.xml:
-
-      <profiles>
-        <profile>
-          <id>opencv-local</id>
-          <activation><activeByDefault>true</activeByDefault></activation>
-          <properties>
-            <opencv.lib.path>/path/to/opencv/build/lib</opencv.lib.path>
-          </properties>
-        </profile>
-      </profiles>
-
-      Or pass it on the command line:
-        mvn javafx:run -Dopencv.lib.path=/path/to/opencv/build/lib
-    -->
-    <opencv.lib.path>${user.home}/opencv-4.13.0/build/lib</opencv.lib.path>
+    <javafx.version>21</javafx.version>
+    <opencv.jar.path>${user.home}/opencv-4.13.0/build/bin/opencv-4130.jar</opencv.jar.path>
   </properties>
 
   <dependencies>
-
-    <!-- MediaPipe for hand detection -->
-    <!-- NOTE: mediapipe-tasks-java is not available on Maven Central or Google Maven. -->
-    <!-- Install manually when ready: mvn install:install-file -Dfile=mediapipe.jar -->
-    <!-- <dependency> -->
-    <!--   <groupId>com.google.mediapipe</groupId> -->
-    <!--   <artifactId>mediapipe-tasks-java</artifactId> -->
-    <!--   <version>0.10.0</version> -->
-    <!-- </dependency> -->
-
     <!-- JavaFX -->
     <dependency>
       <groupId>org.openjfx</groupId>
@@ -57,12 +30,7 @@
     </dependency>
     <dependency>
       <groupId>org.openjfx</groupId>
-      <artifactId>javafx-graphics</artifactId>
-      <version>${javafx.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-base</artifactId>
+      <artifactId>javafx-fxml</artifactId>
       <version>${javafx.version}</version>
     </dependency>
     <dependency>
@@ -71,30 +39,13 @@
       <version>${javafx.version}</version>
     </dependency>
 
-    <!-- OpenCV 4.13.0 — installed locally via mvn install:install-file -->
+    <!-- OpenCV local jar (not on Maven Central) -->
     <dependency>
       <groupId>org.opencv</groupId>
       <artifactId>opencv</artifactId>
       <version>4.13.0</version>
-    </dependency>
-
-    <!-- ZXing — QR code generation -->
-    <dependency>
-      <groupId>com.google.zxing</groupId>
-      <artifactId>core</artifactId>
-      <version>3.5.2</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.zxing</groupId>
-      <artifactId>javase</artifactId>
-      <version>3.5.2</version>
-    </dependency>
-
-    <!-- Java-WebSocket — phone browser communication -->
-    <dependency>
-      <groupId>org.java-websocket</groupId>
-      <artifactId>Java-WebSocket</artifactId>
-      <version>1.5.4</version>
+      <scope>system</scope>
+      <systemPath>${opencv.jar.path}</systemPath>
     </dependency>
 
     <!-- SQLite JDBC -->
@@ -123,32 +74,41 @@
       <artifactId>logback-classic</artifactId>
       <version>1.4.7</version>
     </dependency>
-
   </dependencies>
 
   <build>
     <plugins>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
         <configuration>
-          <source>25</source>
-          <target>25</target>
+          <source>17</source>
+          <target>17</target>
+          <excludes>
+            <!-- Not in use yet — files kept, compilation skipped -->
+            <exclude>aslframework/ui/WordShooterGame.java</exclude>
+            <exclude>aslframework/ui/Open.java</exclude>
+            <exclude>aslframework/ui/network/BattleClient.java</exclude>
+            <exclude>aslframework/ui/network/BattleServer.java</exclude>
+            <exclude>aslframework/ui/network/MobileServer.java</exclude>
+            <exclude>aslframework/ui/network/NetworkedBattleUI.java</exclude>
+            <exclude>aslframework/ui/network/QRCodeGenerator.java</exclude>
+            <exclude>aslframework/game/BattlePlayerState.java</exclude>
+            <exclude>aslframework/game/result/BattleResult.java</exclude>
+            <exclude>aslframework/game/round/BattleRound.java</exclude>
+            <exclude>aslframework/game/session/BattleSession.java</exclude>
+          </excludes>
         </configuration>
       </plugin>
 
-      <!-- JavaFX run: mvn javafx:run -->
+      <!-- JavaFX runner: mvn javafx:run -->
       <plugin>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-maven-plugin</artifactId>
         <version>0.0.8</version>
         <configuration>
-          <mainClass>aslframework.ui.Open</mainClass>
-          <options>
-            <option>-Djava.library.path=${opencv.lib.path}</option>
-          </options>
+          <mainClass>aslframework.Main</mainClass>
         </configuration>
       </plugin>
 
@@ -170,22 +130,15 @@
         <version>3.0.0</version>
       </plugin>
 
-      <!-- Exec plugin -->
+      <!-- Exec plugin for running main -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
-          <mainClass>aslframework.ui.Open</mainClass>
-          <systemProperties>
-            <systemProperty>
-              <key>java.library.path</key>
-              <value>${opencv.lib.path}</value>
-            </systemProperty>
-          </systemProperties>
+          <mainClass>aslframework.Main</mainClass>
         </configuration>
       </plugin>
-
     </plugins>
   </build>
 </project>
