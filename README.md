@@ -2,6 +2,10 @@
 
 An interactive learning framework for American Sign Language (ASL) hand gesture recognition. Built with Java, Google MediaPipe, and SQLite.
 
+## Contributors
+
+Tavish Hookoom (https://github.com/tavishh) Zihao Li (this account) Chengchi Jiang (https://github.com/Chengchi2002)
+
 ## Project Overview
 
 This framework enables real-time ASL letter recognition through an interactive learning application. Users see a target ASL gesture, perform it in front of their webcam, and receive instant accuracy feedback. Designed as an educational tool to help learners master the ASL alphabet through gamified practice sessions.
